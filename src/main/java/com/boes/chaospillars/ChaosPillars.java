@@ -9,6 +9,8 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scoreboard.*;
@@ -16,12 +18,6 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.boss.BossBar;
 import org.bukkit.boss.BarColor;
 import org.bukkit.boss.BarStyle;
-import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.World;
-import org.bukkit.block.Block;
 
 import java.util.*;
 
@@ -30,7 +26,6 @@ public class ChaosPillars extends JavaPlugin implements Listener {
     private final Set<Location> placedBlocks = new HashSet<>();
     private final Set<UUID> activePlayers = new HashSet<>();
     private final List<Location> pillarLocations = new ArrayList<>();
-    private final Map<UUID, Long> startCooldown = new HashMap<>();
     private BukkitRunnable gameTask;
     private BukkitRunnable itemTask;
     private BukkitRunnable countdownTask;
@@ -43,71 +38,26 @@ public class ChaosPillars extends JavaPlugin implements Listener {
     @Override
     public void onEnable() {
         getLogger().info("Chaos Pillars enabled.");
-        Bukkit.getPluginManager().registerEvents(this, this);
-
-        // Your existing onEnable setup here...
-        Bukkit.getScheduler().runTask(this, () -> {
-            // No more voidworld creation or loading here - you said to run in main world
-            gameWorld = Bukkit.getWorlds().get(0); // Get main world
-
-            if (gameWorld == null) {
-                getLogger().severe("Main world could not be loaded.");
-                return;
-            }
-
-            Bukkit.getScheduler().runTaskLater(this, () -> {
-                clearArea();
-                gamerule();
-
-            }, 80L);
-        });
-    }
-    private void clearOutsideBorder(int extraRadius) {
-        if (gameWorld == null) return;
-
-        Location center = new Location(gameWorld,
-                gameWorld.getWorldBorder().getCenter().getX(),
-                0,
-                gameWorld.getWorldBorder().getCenter().getZ()
-        );
-
-        double borderRadius = gameWorld.getWorldBorder().getSize() / 2.0;
-        int minY = gameWorld.getMinHeight();
-        int maxY = gameWorld.getMaxHeight();
-
-        int startRadius = (int) Math.ceil(borderRadius);
-        int endRadius = startRadius + extraRadius;
-
-        int floorY = -64;  // your fixed floor level
-
-        for (int x = -endRadius; x <= endRadius; x++) {
-            for (int z = -endRadius; z <= endRadius; z++) {
-                double dist = Math.sqrt(x * x + z * z);
-
-                if (dist > borderRadius && dist <= endRadius) {
-                    for (int y = minY; y < maxY; y++) {
-                        Location loc = new Location(gameWorld, center.getX() + x, y, center.getZ() + z);
-                        Material type = loc.getBlock().getType();
-
-                        if (y == floorY) {
-                            // At floor level, place bedrock always (add floor)
-                            loc.getBlock().setType(Material.BEDROCK, false);
-                        } else {
-                            // For other levels, clear blocks except bedrock floor
-                            if (type == Material.BEDROCK) continue; // keep any other bedrock untouched
-
-                            loc.getBlock().setType(Material.AIR, false);
-                        }
-                    }
-                }
-            }
+        gameWorld = Bukkit.getWorld("world");
+        if (gameWorld == null) {
+            getLogger().severe("Could not find world 'world'. Plugin disabled.");
+            getServer().getPluginManager().disablePlugin(this);
+            return;
         }
+
+        clearArea(); // Clears arena area at startup
+        gamerule();
+
+        // Set the permanent world border here
+        gameWorld.getWorldBorder().setCenter(0, 0);
+        gameWorld.getWorldBorder().setSize(36);
+        gameWorld.getWorldBorder().setWarningDistance(1); // optional: show warning near border
+        gameWorld.getWorldBorder().setWarningTime(5);
+
+        Bukkit.getPluginManager().registerEvents(this, this);
+        clearSquareShellBeyondWorldBorder();
+        ensureBedrockFloorAtMinus64();
     }
-
-
-
-
-
 
 
     private void gamerule() {
@@ -123,10 +73,8 @@ public class ChaosPillars extends JavaPlugin implements Listener {
     public void onDisable() {
         stopGameTasks();
         resetScoreboard();
-        resetWorldBorder();
+
     }
-
-
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
@@ -137,7 +85,7 @@ public class ChaosPillars extends JavaPlugin implements Listener {
 
         Player player = (Player) sender;
 
-        // 🔒 Require OP for all commands
+        // Require OP for all commands
         if (!player.isOp()) {
             player.sendMessage(ChatColor.RED + "You do not have permission to use this command.");
             return true;
@@ -160,15 +108,24 @@ public class ChaosPillars extends JavaPlugin implements Listener {
                 }
                 return true;
 
-            // Add more commands here if needed
-
             default:
                 return false;
         }
     }
 
-
     private void startCountdown() {
+        int playerCount = Bukkit.getOnlinePlayers().size();
+
+        if (playerCount < 2) {
+            Bukkit.broadcastMessage(ChatColor.RED + "Not enough players to start Chaos Pillars! Need at least 2.");
+            return; // Do not start
+        }
+
+        if (playerCount > 10) {
+            Bukkit.broadcastMessage(ChatColor.RED + "Chaos Pillars supports a maximum of 10 players!");
+            return; // Do not start
+        }
+
         countdownTask = new BukkitRunnable() {
             int count = 10;
 
@@ -181,12 +138,10 @@ public class ChaosPillars extends JavaPlugin implements Listener {
                     countdownTask = null;
                     return;
                 }
-
                 for (Player p : Bukkit.getOnlinePlayers()) {
                     p.sendTitle(ChatColor.GREEN + "" + count, ChatColor.YELLOW + "Starting in...", 0, 20, 10);
                     p.playSound(p.getLocation(), Sound.BLOCK_NOTE_BLOCK_HAT, 1f, 1f);
                 }
-
                 count--;
             }
         };
@@ -217,11 +172,6 @@ public class ChaosPillars extends JavaPlugin implements Listener {
         objective = null;
     }
 
-    private void resetWorldBorder() {
-        if (gameWorld != null) {
-            gameWorld.getWorldBorder().reset();
-        }
-    }
 
     private void killAllMobs() {
         if (gameWorld == null) return;
@@ -251,208 +201,144 @@ public class ChaosPillars extends JavaPlugin implements Listener {
     }
 
     private void startTimer() {
-        timer = 600; // 10 minutes in seconds
+        timer = 600;
+
 
         gameTask = new BukkitRunnable() {
             @Override
             public void run() {
                 timer--;
-
-                // Update scoreboard time
                 if (objective != null) {
-                    objective.getScore(ChatColor.YELLOW + "Time Left").setScore(timer);
-                    objective.getScore(ChatColor.RED + "Players Left").setScore(activePlayers.size());
+                    // Update time left score
+                    objective.getScore(ChatColor.YELLOW + "Time Left: ").setScore(timer);
+                    // Update players left score dynamically
+                    objective.getScore(ChatColor.RED + "Players Left: ").setScore(activePlayers.size());
                 }
 
-                // Update boss bar progress
                 if (bossBar != null) {
                     bossBar.setProgress(Math.max(0, timer / 600.0));
-                    bossBar.setTitle(ChatColor.GOLD + "Time Remaining: " + formatTime(timer));
                 }
 
-                // When timer runs out
                 if (timer <= 0) {
                     Bukkit.broadcastMessage(ChatColor.RED + "Time is up! Game over.");
                     endGame();
                 }
             }
         };
-
-        // Run every second (20 ticks)
         gameTask.runTaskTimer(this, 20L, 20L);
     }
-
 
     private void endGame() {
         stopGameTasks();
         resetScoreboard();
-        resetWorldBorder();
+
 
         Location spawn = gameWorld.getSpawnLocation();
-        for (UUID uuid : activePlayers) {
-            Player player = Bukkit.getPlayer(uuid);
-            if (player != null) {
-                player.teleport(spawn);
-                player.setGameMode(GameMode.SPECTATOR);
-            }
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            player.teleport(spawn);
+            player.setGameMode(GameMode.SPECTATOR);
         }
-
 
         activePlayers.clear();
         clearArea();
         killAllMobs();
+
         if (bossBar != null) {
             bossBar.removeAll();
             bossBar = null;
         }
-
-
-
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            player.teleport(spawn);
-            player.setGameMode(GameMode.SPECTATOR);
-            player.getInventory().clear();
-            player.setHealth(20);
-            player.setFoodLevel(20);
-        }
-    }
-
-    public void createFloorAsync(int floorY, int radius, Runnable callback) {
-        new BukkitRunnable() {
-            int x = -radius;
-            int z = -radius;
-            int blocksPerTick = 100;
-
-            @Override
-            public void run() {
-                int blocksSet = 0;
-
-                while (x <= radius) {
-                    while (z <= radius) {
-                        gameWorld.getBlockAt(x, floorY, z).setType(Material.BEDROCK, false);
-
-                        blocksSet++;
-                        z++;
-
-                        if (blocksSet >= blocksPerTick) {
-                            return; // pause this task, continue next tick
-                        }
-                    }
-                    z = -radius;
-                    x++;
-                }
-                // Finished
-                cancel();
-                if (callback != null) callback.run();
-            }
-        }.runTaskTimer(this, 0L, 1L);
-    }
-
-    public void createPillarsAsync(int totalPillars, int radius, int height, int floorY, Runnable callback) {
-        new BukkitRunnable() {
-            int pillarIndex = 0;
-            int pillarHeight = 0;
-
-            @Override
-            public void run() {
-                if (pillarIndex >= totalPillars) {
-                    cancel();
-                    if (callback != null) callback.run();
-                    return;
-                }
-
-                double angle = 2 * Math.PI * pillarIndex / totalPillars;
-                int x = (int) (radius * Math.cos(angle));
-                int z = (int) (radius * Math.sin(angle));
-                int baseY = floorY + 1;
-
-                // Set one block of the current pillar per tick to avoid lag
-                Location loc = new Location(gameWorld, x, baseY + pillarHeight, z);
-                loc.getBlock().setType(Material.BEDROCK, false);
-                pillarLocations.add(loc);
-
-                pillarHeight++;
-
-                if (pillarHeight >= height) {
-                    pillarHeight = 0;
-                    pillarIndex++;
-                }
-            }
-        }.runTaskTimer(this, 0L, 1L);
     }
 
     private void startGame() {
         clearArea();
-
-        if (gameWorld == null) {
-            getLogger().warning("Game world is not loaded!");
-            return;
-        }
-
         activePlayers.clear();
         pillarLocations.clear();
         killAllMobs();
         startScoreboard();
-
-        int totalPillars = 10;
+        if (bossBar != null) {
+            bossBar.removeAll();
+            bossBar = null;
+        }
         int radius = 12;
         int height = 50;
-
         List<Player> players = new ArrayList<>(Bukkit.getOnlinePlayers());
-        Collections.shuffle(players);
         for (Player p : players) {
             p.getInventory().clear();
         }
 
-        int floorY = -64;
-        double borderSize = gameWorld.getWorldBorder().getSize();
-        int floorRadius = (int) Math.ceil(borderSize / 2.0);
+        // Create pillars and store their base location (one per pillar)
+        List<Location> basePillarLocations = new ArrayList<>();
+        int pillarCount = 10;
 
-        // Step 1: Create floor asynchronously
-        createFloorAsync(floorY, floorRadius, () -> {
-            // Step 2: After floor done, create pillars asynchronously
-            createPillarsAsync(totalPillars, radius, height, floorY, () -> {
-                // Step 3: After pillars are done, teleport players and finish setup
-                teleportPlayersToPillars(players, totalPillars, radius, height, floorY);
-
-                gameWorld.getWorldBorder().setCenter(0, 0);
-                gameWorld.getWorldBorder().setSize(32);
-
-                bossBar = Bukkit.createBossBar(ChatColor.GOLD + "Time Remaining", BarColor.YELLOW, BarStyle.SEGMENTED_10);
-                for (UUID uuid : activePlayers) {
-                    Player player = Bukkit.getPlayer(uuid);
-                    if (player != null) {
-                        bossBar.addPlayer(player);
-                    }
-                }
-                bossBar.setVisible(true);
-
-                startTimer();
-
-                startItemTask();
-            });
-        });
-    }
-
-    private void teleportPlayersToPillars(List<Player> players, int totalPillars, int radius, int height, int floorY) {
-        for (int i = 0; i < players.size(); i++) {
-            Player player = players.get(i);
-            int pillarIndex = i * totalPillars / players.size();
-            double angle = 2 * Math.PI * pillarIndex / totalPillars;
+        for (int i = 0; i < pillarCount; i++) {
+            double angle = 2 * Math.PI * i / pillarCount;
             int x = (int) (radius * Math.cos(angle));
             int z = (int) (radius * Math.sin(angle));
-            int baseY = floorY + height;
+            int baseY = gameWorld.getHighestBlockYAt(x, z) + 1;
 
-            Location tp = new Location(gameWorld, x + 0.5, baseY, z + 0.5);
-            player.teleport(tp);
-            player.setGameMode(GameMode.SURVIVAL);
-            player.setHealth(20);
-            player.setFoodLevel(20);
-            activePlayers.add(player.getUniqueId());
+            // Build pillar
+            for (int y = 0; y < height; y++) {
+                Location loc = new Location(gameWorld, x, baseY + y, z);
+                loc.getBlock().setType(Material.BEDROCK);
+                pillarLocations.add(loc);
+            }
+
+            basePillarLocations.add(new Location(gameWorld, x, baseY, z));
         }
-    }
 
-    private void startItemTask() {
+        // Shuffle players to avoid spawning next to the same people every game
+        Collections.shuffle(players);
+
+        int playerCount = players.size();
+
+        if (playerCount == 3) {
+            // Special case: space 3 players evenly around the circle, i.e. 120 degrees apart
+            for (int i = 0; i < playerCount; i++) {
+                double angle = 2 * Math.PI * i / playerCount; // 0, 120, 240 degrees
+                int x = (int) (radius * Math.cos(angle));
+                int z = (int) (radius * Math.sin(angle));
+                int baseY = gameWorld.getHighestBlockYAt(x, z) + 1;
+                Location tp = new Location(gameWorld, x + 0.5, baseY + height, z + 0.5);
+
+                Player player = players.get(i);
+                player.teleport(tp);
+                player.setGameMode(GameMode.SURVIVAL);
+                player.setHealth(20);
+                player.setFoodLevel(20);
+                activePlayers.add(player.getUniqueId());
+            }
+        } else {
+            // Otherwise, assign players to the first N pillar bases (which we already generated)
+            for (int i = 0; i < playerCount && i < basePillarLocations.size(); i++) {
+                Location baseLoc = basePillarLocations.get(i);
+                Player player = players.get(i);
+                Location tp = baseLoc.clone().add(0.5, height, 0.5);
+                player.teleport(tp);
+                player.setGameMode(GameMode.SURVIVAL);
+                player.setHealth(20);
+                player.setFoodLevel(20);
+                activePlayers.add(player.getUniqueId());
+            }
+        }
+
+        gameWorld.getWorldBorder().setCenter(0, 0);
+        gameWorld.getWorldBorder().setSize(32);
+
+        // Create the boss bar and add players now that activePlayers is filled
+        bossBar = Bukkit.createBossBar(ChatColor.GOLD + "Time Remaining", BarColor.YELLOW, BarStyle.SEGMENTED_10);
+        for (UUID uuid : activePlayers) {
+            Player player = Bukkit.getPlayer(uuid);
+            if (player != null) {
+                bossBar.addPlayer(player);
+            }
+        }
+        bossBar.setProgress(1.0);
+        bossBar.setVisible(true);
+
+        // Start the timer task
+        startTimer();
+
+        // Start giving random items periodically
         itemTask = new BukkitRunnable() {
             Random rand = new Random();
 
@@ -472,11 +358,6 @@ public class ChaosPillars extends JavaPlugin implements Listener {
         };
         itemTask.runTaskTimer(this, 80L, 80L);
     }
-
-
-
-
-
 
 
     @EventHandler
@@ -514,39 +395,22 @@ public class ChaosPillars extends JavaPlugin implements Listener {
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
         player.setGameMode(GameMode.SPECTATOR);
-
-        // Add boss bar to new player if game running
-        if (bossBar != null && activePlayers.contains(player.getUniqueId())) {
-            bossBar.addPlayer(player);
-        }
     }
 
     private void clearArea() {
-        if (gameWorld == null) return;
-
-        int radius = 40;  // fixed 40 block radius as requested
-        int minY = gameWorld.getMinHeight();
-        int maxY = gameWorld.getMaxHeight();
-
-        int floorY = -64;  // floor level to keep intact
+        int radius = 50;
+        int minY = -63; // Start at -63 so -64 layer is kept
+        int maxY = gameWorld.getMaxHeight(); // usually 319
 
         for (int x = -radius; x <= radius; x++) {
             for (int z = -radius; z <= radius; z++) {
                 for (int y = minY; y < maxY; y++) {
-                    if (y == floorY) continue;  // skip the floor layer
-
-                    gameWorld.getBlockAt(x, y, z).setType(Material.AIR, false);
+                    if (y == -64) continue; // keep the bottom layer
+                    Location loc = new Location(gameWorld, x, y, z);
+                    loc.getBlock().setType(Material.AIR);
                 }
             }
         }
-    }
-
-
-
-    private String formatTime(int seconds) {
-        int minutes = seconds / 60;
-        int secs = seconds % 60;
-        return String.format("%02d:%02d", minutes, secs);
     }
 
     @EventHandler
@@ -572,4 +436,66 @@ public class ChaosPillars extends JavaPlugin implements Listener {
         }
     }
 
+    private void clearSquareShellBeyondWorldBorder() {
+        if (gameWorld == null) return;
+
+        WorldBorder border = gameWorld.getWorldBorder();
+        Location center = border.getCenter();
+        double borderRadius = border.getSize() / 2.0;
+
+        int minY = gameWorld.getMinHeight();
+        int maxY = gameWorld.getMaxHeight();
+
+        int innerRadius = (int) Math.floor(borderRadius);
+        int outerRadius = innerRadius + 5; // 5 blocks outside border
+
+        int minX = (int) Math.floor(center.getX()) - outerRadius;
+        int maxX = (int) Math.ceil(center.getX()) + outerRadius;
+        int minZ = (int) Math.floor(center.getZ()) - outerRadius;
+        int maxZ = (int) Math.ceil(center.getZ()) + outerRadius;
+
+        for (int x = minX; x <= maxX; x++) {
+            for (int z = minZ; z <= maxZ; z++) {
+                // Check if block is outside the border square but inside the outer square
+                boolean outsideInner = x < (center.getX() - innerRadius) || x > (center.getX() + innerRadius)
+                        || z < (center.getZ() - innerRadius) || z > (center.getZ() + innerRadius);
+
+                boolean insideOuter = x >= (center.getX() - outerRadius) && x <= (center.getX() + outerRadius)
+                        && z >= (center.getZ() - outerRadius) && z <= (center.getZ() + outerRadius);
+
+                if (outsideInner && insideOuter) {
+                    for (int y = minY; y <= maxY; y++) {
+                        Location loc = new Location(gameWorld, x, y, z);
+                        loc.getBlock().setType(Material.AIR);
+                    }
+                }
+            }
+        }
+
+        getLogger().info("Cleared 5-block thick square shell outside the world border.");
+    }
+
+    private void ensureBedrockFloorAtMinus64() {
+        if (gameWorld == null) return;
+
+        WorldBorder border = gameWorld.getWorldBorder();
+        Location center = border.getCenter();
+        double borderRadius = border.getSize() / 2.0;
+
+        int floorY = -64;
+        int minX = (int) Math.floor(center.getX() - borderRadius);
+        int maxX = (int) Math.ceil(center.getX() + borderRadius);
+        int minZ = (int) Math.floor(center.getZ() - borderRadius);
+        int maxZ = (int) Math.ceil(center.getZ() + borderRadius);
+
+        for (int x = minX; x <= maxX; x++) {
+            for (int z = minZ; z <= maxZ; z++) {
+                Location loc = new Location(gameWorld, x, floorY, z);
+                if (loc.getBlock().getType() != Material.BEDROCK) {
+                    loc.getBlock().setType(Material.BEDROCK);
+                }
+            }
+        }
+        getLogger().info("Ensured bedrock floor at Y=-64 covering the world border area.");
+    }
 }
