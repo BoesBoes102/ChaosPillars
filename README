@@ -1,0 +1,69 @@
+# Chaos Pillars
+
+Chaos Pillars is a Minecraft minigame plugin for Paper servers, written in Java.
+Players are teleported onto bedrock pillars in a circle and compete to be the last one standing. The game features random item drops, a timer with a boss bar, a scoreboard, and automatic player elimination.
+
+---
+
+## Features
+
+- Teleports up to 10 players onto randomly assigned bedrock towers arranged in a circle
+- Permanent world border set around the arena to keep players inside
+- Random items periodically dropped to players during the game
+- 10-minute timer displayed via a boss bar and sidebar scoreboard
+- Players are eliminated on death or quitting; last player standing wins
+- Game ends automatically when only one player remains or time runs out
+- Prevents mob spawning except via spawner eggs
+- Clears and prepares the arena automatically on server start and game start
+
+---
+
+## Commands
+
+- `/startchaos` - Starts the Chaos Pillars game (requires OP)
+- `/stopchaos` - Stops the current game and resets (requires OP)
+
+---
+
+## Installation
+
+1. Place the compiled ChaosPillars.jar into your server's `plugins` folder.
+2. Start or restart your Paper server.
+3. Ensure the world named `world` exists, or adjust the code to use your desired world.
+4. Use `/startchaos` to begin the game when enough players are online.
+
+---
+
+## Requirements
+
+- Paper Minecraft server (1.21.7 recommended)
+- Java 17+
+- Proper permissions (OP) to start/stop the game
+
+---
+
+## Configuration
+
+Currently, there are no external config files. Future updates may include configurable settings.
+
+---
+
+## Development
+
+Feel free to fork and modify the plugin under the [MIT License](LICENSE).
+
+---
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+---
+
+## Contact
+
+For questions, issues, or contributions, open an issue or submit a pull request on GitHub.
+
+---
+
+Enjoy the chaos and may the best player win! 🎉
