@@ -1,6 +1,7 @@
 package com.boes.chaospillars;
 
 import org.bukkit.*;
+import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Entity;
@@ -18,12 +19,20 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.boss.BossBar;
 import org.bukkit.boss.BarColor;
 import org.bukkit.boss.BarStyle;
+import org.bukkit.event.player.PlayerMoveEvent;
 
 import java.util.*;
 
 public class ChaosPillars extends JavaPlugin implements Listener {
 
-    private final Set<Location> placedBlocks = new HashSet<>();
+    private static final Material[] PILLAR_BLOCK_TYPES = {
+            Material.BEDROCK,
+            Material.SAND,
+            Material.NETHERRACK,
+            Material.END_STONE
+    };
+
+
     private final Set<UUID> activePlayers = new HashSet<>();
     private final List<Location> pillarLocations = new ArrayList<>();
     private BukkitRunnable gameTask;
@@ -36,6 +45,9 @@ public class ChaosPillars extends JavaPlugin implements Listener {
     private BossBar bossBar;
     private String timeLeftKey = ChatColor.YELLOW + "Time Left:";
     private String playersLeftKey = ChatColor.YELLOW + "Players Left:";
+    private final Set<UUID> frozenPlayers = new HashSet<>();
+    private Material currentRoundPillarMaterial;
+
     @Override
     public void onEnable() {
         getLogger().info("Chaos Pillars enabled.");
@@ -48,15 +60,15 @@ public class ChaosPillars extends JavaPlugin implements Listener {
 
         clearArea();
         gamerule();
-
+        ensureBedrockFloorAtMinus64();
         gameWorld.getWorldBorder().setCenter(0, 0);
-        gameWorld.getWorldBorder().setSize(36);
+        gameWorld.getWorldBorder().setSize(40);
         gameWorld.getWorldBorder().setWarningDistance(1);
         gameWorld.getWorldBorder().setWarningTime(5);
 
         Bukkit.getPluginManager().registerEvents(this, this);
-        clearSquareShellBeyondWorldBorder();
-        ensureBedrockFloorAtMinus64();
+
+
     }
 
     private void gamerule() {
@@ -90,12 +102,25 @@ public class ChaosPillars extends JavaPlugin implements Listener {
 
         switch (command.getName().toLowerCase()) {
             case "startchaos":
-                if (countdownTask != null) {
-                    player.sendMessage(ChatColor.RED + "Chaos game is already starting or running!");
+                if (gameTask != null || countdownTask != null) {
+                    player.sendMessage(ChatColor.RED + "Chaos game is already running!");
                     return true;
                 }
-                startCountdown();
+                int playerCount = Bukkit.getOnlinePlayers().size();
+
+                if (playerCount < 2) {
+                    player.sendMessage(ChatColor.RED + "Not enough players to start Chaos Pillars! Need at least 2.");
+                    return true;
+                }
+
+                if (playerCount > 10) {
+                    player.sendMessage(ChatColor.RED + "Chaos Pillars supports a maximum of 10 players!");
+                    return true;
+                }
+                Bukkit.broadcastMessage(ChatColor.GREEN + "Chaos Pillars game starting!");
+                startGame();
                 return true;
+
 
             case "stopchaos":
                 endGame();
@@ -110,40 +135,7 @@ public class ChaosPillars extends JavaPlugin implements Listener {
         }
     }
 
-    private void startCountdown() {
-        int playerCount = Bukkit.getOnlinePlayers().size();
 
-        if (playerCount < 2) {
-            Bukkit.broadcastMessage(ChatColor.RED + "Not enough players to start Chaos Pillars! Need at least 2.");
-            return;
-        }
-
-        if (playerCount > 10) {
-            Bukkit.broadcastMessage(ChatColor.RED + "Chaos Pillars supports a maximum of 10 players!");
-            return;
-        }
-
-        countdownTask = new BukkitRunnable() {
-            int count = 10;
-
-            @Override
-            public void run() {
-                if (count <= 0) {
-                    Bukkit.broadcastMessage(ChatColor.GREEN + "Chaos Pillars game started!");
-                    startGame();
-                    cancel();
-                    countdownTask = null;
-                    return;
-                }
-                for (Player p : Bukkit.getOnlinePlayers()) {
-                    p.sendTitle(ChatColor.GREEN + "" + count, ChatColor.YELLOW + "Starting in...", 0, 20, 10);
-                    p.playSound(p.getLocation(), Sound.BLOCK_NOTE_BLOCK_HAT, 1f, 1f);
-                }
-                count--;
-            }
-        };
-        countdownTask.runTaskTimer(this, 0L, 20L);
-    }
 
     private void stopGameTasks() {
         if (gameTask != null) gameTask.cancel();
@@ -242,7 +234,8 @@ public class ChaosPillars extends JavaPlugin implements Listener {
     }
 
     private void startGame() {
-        clearArea();
+
+
         activePlayers.clear();
         pillarLocations.clear();
         killAllMobs();
@@ -253,12 +246,16 @@ public class ChaosPillars extends JavaPlugin implements Listener {
             bossBar = null;
         }
 
+        Random random = new Random();
+        currentRoundPillarMaterial = PILLAR_BLOCK_TYPES[random.nextInt(PILLAR_BLOCK_TYPES.length)];
+        Bukkit.broadcastMessage(ChatColor.LIGHT_PURPLE + "This round's pillars are made of " + ChatColor.YELLOW + currentRoundPillarMaterial.name().toLowerCase().replace('_', ' ') + "!");
+
         int radius = 12;
         int height = 50;
         int baseY = -63;
 
         List<Player> players = new ArrayList<>(Bukkit.getOnlinePlayers());
-        Collections.shuffle(players); // 🔀 Randomize player order
+        Collections.shuffle(players); // Randomize pillar assignment
 
         for (Player p : players) {
             p.getInventory().clear();
@@ -274,7 +271,7 @@ public class ChaosPillars extends JavaPlugin implements Listener {
 
             for (int y = 0; y < height; y++) {
                 Location loc = new Location(gameWorld, x, baseY + y, z);
-                loc.getBlock().setType(Material.BEDROCK);
+                loc.getBlock().setType(currentRoundPillarMaterial);
                 pillarLocations.add(loc);
             }
 
@@ -293,7 +290,7 @@ public class ChaosPillars extends JavaPlugin implements Listener {
         }
 
         gameWorld.getWorldBorder().setCenter(0, 0);
-        gameWorld.getWorldBorder().setSize(32);
+        gameWorld.getWorldBorder().setSize(40);
 
         bossBar = Bukkit.createBossBar(ChatColor.GOLD + "Time Remaining", BarColor.YELLOW, BarStyle.SEGMENTED_10);
         for (UUID uuid : activePlayers) {
@@ -305,27 +302,61 @@ public class ChaosPillars extends JavaPlugin implements Listener {
         bossBar.setProgress(1.0);
         bossBar.setVisible(true);
 
-        startTimer();
+        // Freeze all players
+        for (UUID uuid : activePlayers) {
+            frozenPlayers.add(uuid);
+        }
 
-        itemTask = new BukkitRunnable() {
-            Random rand = new Random();
+        // Countdown before enabling movement and starting game
+        new BukkitRunnable() {
+            int countdown = 10;
 
             @Override
             public void run() {
+                if (countdown == 0) {
+                    Bukkit.broadcastMessage(ChatColor.GREEN + "Go!");
+                    for (UUID uuid : frozenPlayers) {
+                        Player player = Bukkit.getPlayer(uuid);
+                        if (player != null) {
+                            player.sendTitle(ChatColor.GREEN + "GO!", "", 10, 40, 10);
+                        }
+                    }
+                    frozenPlayers.clear();
+                    startTimer();
+
+                    itemTask = new BukkitRunnable() {
+                        Random rand = new Random();
+                        @Override
+                        public void run() {
+                            for (UUID uuid : activePlayers) {
+                                Player player = Bukkit.getPlayer(uuid);
+                                if (player == null) continue;
+                                Material[] materials = Material.values();
+                                Material mat = materials[rand.nextInt(materials.length)];
+                                try {
+                                    player.getInventory().addItem(new ItemStack(mat));
+                                } catch (Exception ignored) {}
+                            }
+                        }
+                    };
+                    itemTask.runTaskTimer(ChaosPillars.this, 80L, 80L);
+                    cancel();
+                    return;
+                }
+
                 for (UUID uuid : activePlayers) {
                     Player player = Bukkit.getPlayer(uuid);
-                    if (player == null) continue;
-                    Material[] materials = Material.values();
-                    Material mat = materials[rand.nextInt(materials.length)];
-                    try {
-                        player.getInventory().addItem(new ItemStack(mat));
-                    } catch (Exception ignored) {
+                    if (player != null) {
+                        player.sendTitle(ChatColor.YELLOW + "Starting in", ChatColor.RED.toString() + countdown, 0, 20, 0);
+                        player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 1.5f);
                     }
                 }
+
+                countdown--;
             }
-        };
-        itemTask.runTaskTimer(this, 80L, 80L);
+        }.runTaskTimer(this, 0L, 20L);
     }
+
 
     @EventHandler
     public void onCreatureSpawn(CreatureSpawnEvent event) {
@@ -395,81 +426,126 @@ public class ChaosPillars extends JavaPlugin implements Listener {
         }
     }
 
+    private BukkitRunnable clearTask;
+
     private void clearArea() {
-        int radius = 50;
+        int radius = 18;
         int minY = -63;
         int maxY = gameWorld.getMaxHeight();
 
-        for (int x = -radius; x <= radius; x++) {
-            for (int z = -radius; z <= radius; z++) {
-                for (int y = minY; y < maxY; y++) {
-                    if (y == -64) continue;
-                    Location loc = new Location(gameWorld, x, y, z);
-                    loc.getBlock().setType(Material.AIR);
-                }
-            }
-        }
-    }
+        // Start coordinates
+        final int[] x = {-radius};
+        final int[] y = {minY};
+        final int[] z = {-radius};
+        final int batchSize = 100;
 
-    private void clearSquareShellBeyondWorldBorder() {
-        if (gameWorld == null) return;
+        clearTask = new BukkitRunnable() {
+            @Override
+            public void run() {
+                int cleared = 0;
 
-        WorldBorder border = gameWorld.getWorldBorder();
-        Location center = border.getCenter();
-        double borderRadius = border.getSize() / 2.0;
+                while (cleared < batchSize) {
+                    // Skip the floor layer at Y = -64
+                    if (y[0] == -64) {
+                        y[0]++;
+                        continue;
+                    }
 
-        int minY = gameWorld.getMinHeight();
-        int maxY = gameWorld.getMaxHeight();
+                    // Only clear blocks within a circular radius
+                    if (x[0] * x[0] + z[0] * z[0] <= radius * radius) {
+                        Block block = gameWorld.getBlockAt(x[0], y[0], z[0]);
+                        if (block.getType() != Material.AIR) {
+                            block.setType(Material.AIR, false); // Set to AIR without physics
+                            cleared++;
+                        }
+                    }
 
-        int innerRadius = (int) Math.floor(borderRadius);
-        int outerRadius = innerRadius + 5;
-
-        int minX = (int) Math.floor(center.getX()) - outerRadius;
-        int maxX = (int) Math.ceil(center.getX()) + outerRadius;
-        int minZ = (int) Math.floor(center.getZ()) - outerRadius;
-        int maxZ = (int) Math.ceil(center.getZ()) + outerRadius;
-
-        for (int x = minX; x <= maxX; x++) {
-            for (int z = minZ; z <= maxZ; z++) {
-                boolean outsideInner = x < (center.getX() - innerRadius) || x > (center.getX() + innerRadius)
-                        || z < (center.getZ() - innerRadius) || z > (center.getZ() + innerRadius);
-
-                boolean insideOuter = x >= (center.getX() - outerRadius) && x <= (center.getX() + outerRadius)
-                        && z >= (center.getZ() - outerRadius) && z <= (center.getZ() + outerRadius);
-
-                if (outsideInner && insideOuter) {
-                    for (int y = minY; y <= maxY; y++) {
-                        Location loc = new Location(gameWorld, x, y, z);
-                        loc.getBlock().setType(Material.AIR);
+                    // Advance Z
+                    z[0]++;
+                    if (z[0] > radius) {
+                        z[0] = -radius;
+                        y[0]++;
+                        if (y[0] >= maxY) {
+                            y[0] = minY;
+                            x[0]++;
+                            if (x[0] > radius) {
+                                cancel();
+                                getLogger().info("✔ Area cleared!");
+                                return;
+                            }
+                        }
                     }
                 }
             }
-        }
+        };
 
-        getLogger().info("Cleared 5-block thick square shell outside the world border.");
+        clearTask.runTaskTimer(this, 0L, 1L);
     }
+
+
+
 
     private void ensureBedrockFloorAtMinus64() {
         if (gameWorld == null) return;
 
-        WorldBorder border = gameWorld.getWorldBorder();
-        Location center = border.getCenter();
-        double borderRadius = border.getSize() / 2.0;
-
+        int radius = 18;
         int floorY = -64;
-        int minX = (int) Math.floor(center.getX() - borderRadius);
-        int maxX = (int) Math.ceil(center.getX() + borderRadius);
-        int minZ = (int) Math.floor(center.getZ() - borderRadius);
-        int maxZ = (int) Math.ceil(center.getZ() + borderRadius);
+        int centerX = 0;
+        int centerZ = 0;
 
-        for (int x = minX; x <= maxX; x++) {
-            for (int z = minZ; z <= maxZ; z++) {
-                Location loc = new Location(gameWorld, x, floorY, z);
-                if (loc.getBlock().getType() != Material.BEDROCK) {
-                    loc.getBlock().setType(Material.BEDROCK);
+        int minX = centerX - radius;
+        int maxX = centerX + radius;
+        int minZ = centerZ - radius;
+        int maxZ = centerZ + radius;
+
+        double radiusSquared = radius * radius;
+
+        new BukkitRunnable() {
+            int x = minX;
+            int z = minZ;
+
+            @Override
+            public void run() {
+                int placed = 0;
+                int blocksPerTick = 100;
+
+                while (x <= maxX && placed < blocksPerTick) {
+                    while (z <= maxZ && placed < blocksPerTick) {
+                        double dx = x + 0.5 - centerX;
+                        double dz = z + 0.5 - centerZ;
+
+                        if ((dx * dx + dz * dz) <= radiusSquared) {
+                            Location loc = new Location(gameWorld, x, floorY, z);
+                            if (loc.getBlock().getType() != Material.BEDROCK) {
+                                loc.getBlock().setType(Material.BEDROCK);
+                            }
+                            placed++;
+                        }
+                        z++;
+                    }
+                    if (z > maxZ) {
+                        z = minZ;
+                        x++;
+                    }
+                }
+
+                if (x > maxX) {
+                    cancel();
+                    getLogger().info("Finished generating circular bedrock floor with radius 18 at Y = -64.");
                 }
             }
+        }.runTaskTimer(this, 0L, 1L);
+    }
+
+
+
+    @EventHandler
+    public void onPlayerMove(PlayerMoveEvent event) {
+        Player player = event.getPlayer();
+        if (frozenPlayers.contains(player.getUniqueId())) {
+            if (!event.getFrom().toVector().equals(event.getTo().toVector())) {
+                event.setTo(event.getFrom());
+            }
         }
-        getLogger().info("Ensured bedrock floor at Y=-64 covering the world border area.");
     }
 }
