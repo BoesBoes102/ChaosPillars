@@ -4,11 +4,12 @@ import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.Player;
+import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.entity.CreatureSpawnEvent;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
@@ -22,6 +23,7 @@ import org.bukkit.boss.BossBar;
 import org.bukkit.boss.BarColor;
 import org.bukkit.boss.BarStyle;
 import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -195,7 +197,7 @@ public class ChaosPillars extends JavaPlugin implements Listener {
 
     private void startTimer() {
         timer = 600;
-        powerupCooldown = 60;
+        powerupCooldown = 30;
 
         gameTask = new BukkitRunnable() {
             @Override
@@ -215,7 +217,7 @@ public class ChaosPillars extends JavaPlugin implements Listener {
 
                 if (powerupCooldown <= 0) {
                     Randompostiveeffect();
-                    powerupCooldown = 60; // Reset cooldown
+                    powerupCooldown = 30; // Reset cooldown
                 }
 
                 if (timer <= 0) {
@@ -302,6 +304,7 @@ public class ChaosPillars extends JavaPlugin implements Listener {
             player.setGameMode(GameMode.SURVIVAL);
             player.setHealth(20);
             player.setFoodLevel(20);
+            player.clearActivePotionEffects();
             activePlayers.add(player.getUniqueId());
         }
 
@@ -584,7 +587,32 @@ public class ChaosPillars extends JavaPlugin implements Listener {
         }.runTaskTimer(this, 0L, 1L);
     }
 
+    @EventHandler
+    public void onBlockBreak(BlockBreakEvent event) {
+        Player player = event.getPlayer();
+        if (frozenPlayers.contains(player.getUniqueId())) {
+            event.setCancelled(true);
+            player.sendMessage(ChatColor.RED + "Wait for the countdown to end!");
+        }
+    }
 
+    @EventHandler
+    public void onProjectileHit(EntityDamageByEntityEvent event) {
+        if (!(event.getEntity() instanceof Player victim)) return;
+
+        Entity damager = event.getDamager();
+
+        if (damager instanceof Snowball || damager instanceof Egg) {
+            if (!(damager instanceof Projectile projectile)) return;
+            if (!(projectile.getShooter() instanceof Player shooter)) return;
+
+            // Knockback direction = from shooter to victim
+            org.bukkit.util.@NotNull Vector direction = victim.getLocation().toVector().subtract(shooter.getLocation().toVector()).normalize();
+            @NotNull Vector knockback = direction.multiply(0.8).setY(0.5); // Horizontal + small lift
+
+            victim.setVelocity(knockback);
+        }
+    }
 
     @EventHandler
     public void onPlayerMove(PlayerMoveEvent event) {
