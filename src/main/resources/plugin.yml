@@ -5,5 +5,35 @@ api-version: 1.20
 commands:
   startchaos:
     description: Starts the Chaos Pillars game
+    usage: /startchaos
+    permission: Chaos.start
   stopchaos:
     description: Stops the Chaos Pillars game
+    usage: /stopchaos
+    permission: Chaos.stop
+  chaosreload:
+    description: Reloads the Chaos Pillars config
+    usage: /chaosreload
+    permission: Chaos.admin
+  stats:
+    description: View your Chaos Pillars stats
+    usage: /stats
+    permission: Chaos.stats
+
+permissions:
+  Chaos.admin:
+    description: Allows full control over Chaos Pillars
+    default: op
+    children:
+      Chaos.start: true
+      Chaos.stop: true
+
+  Chaos.start:
+    description: Allows starting the Chaos Pillars game
+    default: false
+
+  Chaos.stop:
+    description: Allows stopping the Chaos Pillars game
+    default: false
+
+

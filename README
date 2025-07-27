@@ -1,12 +1,7 @@
 # Chaos Pillars
+Pillars of Chaos is a minigame based of Cubecraft Pillars of Fortune but with more chaos and for java and with configuration
 
-Chaos Pillars is a Minecraft minigame plugin for Paper servers, written in Java.
-Players are teleported onto bedrock pillars in a circle and compete to be the last one standing. The game features random item drops, a timer with a boss bar, a scoreboard, and automatic player elimination.
-
----
-
-## Features
-
+# Features
 - Teleports up to 10 players onto randomly assigned bedrock towers arranged in a circle
 - Permanent world border set around the arena to keep players inside
 - Random items periodically dropped to players during the game
