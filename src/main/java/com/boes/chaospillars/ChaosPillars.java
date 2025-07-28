@@ -87,7 +87,7 @@ public class ChaosPillars extends JavaPlugin implements Listener {
 
         clearArea();
         gamerule();
-        bedrockPlatform();
+        Bukkit.getScheduler().runTaskLater(this, () -> bedrockPlatform(), 40L);
 
         gameWorld.getWorldBorder().setCenter(0.5, 0.5);
         gameWorld.getWorldBorder().setSize(37);
@@ -354,9 +354,9 @@ public class ChaosPillars extends JavaPlugin implements Listener {
             player.teleport(spawn);
             player.setGameMode(GameMode.SPECTATOR);
         }
-        bedrockPlatform();
-        activePlayers.clear();
         clearArea();
+        activePlayers.clear();
+        Bukkit.getScheduler().runTaskLater(this, () -> bedrockPlatform(), 40L);
         killAllMobs();
         setGameState(GameState.IDLE);
         if (bossBar != null) {
