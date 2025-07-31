@@ -1,39 +1,30 @@
 name: ChaosPillars
 main: com.boes.chaospillars.ChaosPillars
-version: 1.3
+version: 1.4
 api-version: 1.20
 commands:
-  startchaos:
-    description: Starts the Chaos Pillars game
-    usage: /startchaos
-    permission: Chaos.start
-  stopchaos:
-    description: Stops the Chaos Pillars game
-    usage: /stopchaos
-    permission: Chaos.stop
-  chaosreload:
-    description: Reloads the Chaos Pillars config
-    usage: /chaosreload
-    permission: Chaos.admin
-  stats:
-    description: View your Chaos Pillars stats
-    usage: /stats
-    permission: Chaos.stats
+  chaos:
+    description: Root command for Chaos Pillars
+    usage: /<command> <start|stop|reload|stats>
+    permission: chaospillars.use
+
+
 
 permissions:
-  Chaos.admin:
-    description: Allows full control over Chaos Pillars
+  chaospillars.use:
+    description: Use the base /chaos command
+    default: true
+
+  chaospillars.start:
+    description: Start the Chaos Pillars game
+    default: true
+
+  chaospillars.stop:
+    description: Stop the Chaos Pillars game
     default: op
-    children:
-      Chaos.start: true
-      Chaos.stop: true
 
-  Chaos.start:
-    description: Allows starting the Chaos Pillars game
-    default: false
-
-  Chaos.stop:
-    description: Allows stopping the Chaos Pillars game
-    default: false
+  chaospillars.reload:
+    description: Reload Chaos Pillars config
+    default: op
 
 

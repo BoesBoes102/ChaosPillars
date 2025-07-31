@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 
 public class StatsManager {
@@ -55,7 +56,7 @@ public class StatsManager {
         Map<UUID, PlayerStats> loadedStats = new HashMap<>();
         if (!statsConfig.isConfigurationSection("players")) return loadedStats;
 
-        for (String uuidString : statsConfig.getConfigurationSection("players").getKeys(false)) {
+        for (String uuidString : Objects.requireNonNull(statsConfig.getConfigurationSection("players")).getKeys(false)) {
             UUID uuid = UUID.fromString(uuidString);
             PlayerStats stats = new PlayerStats();
 

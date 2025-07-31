@@ -2,8 +2,7 @@ package com.boes.chaospillars;
 
 import org.bukkit.*;
 import org.bukkit.block.Block;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandSender;
+import com.boes.chaospillars.enums.GameState;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -30,16 +29,18 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class ChaosPillars extends JavaPlugin implements Listener {
-
+    private int eventCooldown;
+    public Material currentRoundFloorMaterial;
+    private int maxEventCooldown;
     private int powerupCooldown = 30;
     private int maxTimer = 600;
     private int timer = 600;
-    private Map<UUID, PlayerStats> playerStats = new HashMap<>();
+    public Map<UUID, PlayerStats> playerStats = new HashMap<>();
     private final Map<UUID, UUID> lastDamager = new HashMap<>();
     private final Set<UUID> activePlayers = new HashSet<>();
     private BukkitRunnable gameTask;
     private BukkitRunnable itemTask;
-    private BukkitRunnable countdownTask;
+    public BukkitRunnable countdownTask;
     private Scoreboard scoreboard;
     private Objective objective;
     private World gameWorld;
@@ -53,11 +54,7 @@ public class ChaosPillars extends JavaPlugin implements Listener {
     private List<Material> pillarBlockTypes = new ArrayList<>();
     private final int itemGiveIntervalTicks = 60;
 
-    public enum GameState {
-        IDLE,
-        COUNTDOWN,
-        RUNNING
-    }
+
     private GameState gameState = GameState.IDLE;
 
     public GameState getGameState() {
@@ -84,6 +81,8 @@ public class ChaosPillars extends JavaPlugin implements Listener {
             getServer().getPluginManager().disablePlugin(this);
             return;
         }
+        getCommand("chaos").setExecutor(new ChaosCommand(this));
+        getCommand("chaos").setTabCompleter(new ChaosCommand(this));
 
         clearArea();
         gamerule();
@@ -115,7 +114,7 @@ public class ChaosPillars extends JavaPlugin implements Listener {
         gameWorld.setGameRule(GameRule.DO_IMMEDIATE_RESPAWN, true);
     }
 
-    private void reloadGameConfig() {
+    public void reloadGameConfig() {
         String worldName = getConfig().getString("game.world-name", "world");
         gameWorld = Bukkit.getWorld(worldName);
 
@@ -182,80 +181,7 @@ public class ChaosPillars extends JavaPlugin implements Listener {
         getLogger().info("Loaded floor blocks: " + floorBlockTypes);
         getLogger().info("Loaded pillar blocks: " + pillarBlockTypes);
     }
-    @Override
-    public boolean onCommand(@NotNull CommandSender sender,@NotNull Command command,@NotNull String label,@NotNull String @NotNull[] args) {
-        if (!(sender instanceof Player)) {
-            sender.sendMessage("Only players can use this command.");
-            return true;
-        }
 
-        if (!(sender instanceof Player player)) {
-            sender.sendMessage("Only players can use this command.");
-            return true;
-        }
-
-        switch (command.getName().toLowerCase()) {
-            case "startchaos":
-                if (!player.hasPermission("Chaos.start")) {
-                    player.sendMessage(ChatColor.RED + "You do not have permission to start the Chaos Pillars game.");
-                    return true;
-                }
-                if (getGameState() != GameState.IDLE) {
-                    player.sendMessage(ChatColor.RED + "Chaos game is already running or counting down!");
-                    return true;
-                }
-                int playerCount = Bukkit.getOnlinePlayers().size();
-
-                if (playerCount < 2) {
-                    player.sendMessage(ChatColor.RED + "Not enough players to start Chaos Pillars! Need at least 2.");
-                    return true;
-                }
-
-                if (playerCount > 10) {
-                    player.sendMessage(ChatColor.RED + "Chaos Pillars supports a maximum of 10 players!");
-                    return true;
-                }
-                Bukkit.broadcastMessage(ChatColor.GREEN + "Chaos Pillars game starting!");
-                startGame();
-                return true;
-
-
-            case "stopchaos":
-                if (!player.hasPermission("Chaos.stop")) {
-                    player.sendMessage(ChatColor.RED + "You do not have permission to stop the Chaos Pillars game.");
-                    return true;
-                }
-                endGame();
-                if (countdownTask != null) {
-                    countdownTask.cancel();
-                    countdownTask = null;
-                }
-                return true;
-            case "chaosreload":
-                if (!player.hasPermission("Chaos.admin")) return true;
-                reloadConfig();
-                reloadGameConfig();
-                player.sendMessage(ChatColor.GREEN + "Chaos Pillars config reloaded!");
-                return true;
-            case "stats":
-                if (!(sender instanceof Player)) {
-                    sender.sendMessage("This command can only be used by players.");
-                    return true;
-                }
-                PlayerStats stats = playerStats.getOrDefault(player.getUniqueId(), new PlayerStats());
-
-                player.sendMessage(ChatColor.GOLD + "=== Your Chaos Pillars Stats ===");
-                player.sendMessage(ChatColor.YELLOW + "Wins: " + ChatColor.WHITE + stats.getWins());
-                player.sendMessage(ChatColor.YELLOW + "Games Played: " + ChatColor.WHITE + stats.getGamesPlayed());
-                player.sendMessage(ChatColor.YELLOW + "Win Rate: " + ChatColor.WHITE + String.format("%.1f", stats.getWinRate()) + "%");
-                player.sendMessage(ChatColor.YELLOW + "Kills: " + ChatColor.WHITE + stats.getKills());
-                player.sendMessage(ChatColor.YELLOW + "Deaths: " + ChatColor.WHITE + stats.getDeaths());
-                player.sendMessage(ChatColor.YELLOW + "KDR: " + ChatColor.WHITE + String.format("%.2f", stats.getKDR()));
-                return true;
-            default:
-                return false;
-        }
-    }
 
     private void stopGameTasks() {
         if (gameTask != null) gameTask.cancel();
@@ -309,30 +235,43 @@ public class ChaosPillars extends JavaPlugin implements Listener {
     private void startTimer() {
         timer = getConfig().getInt("game.timer-seconds", 600);
         powerupCooldown = getConfig().getInt("game.powerup-cooldown-seconds", 30);
-
+        eventCooldown = getConfig().getInt("game.event-cooldown-seconds", 120);
+        maxEventCooldown = eventCooldown;
 
         gameTask = new BukkitRunnable() {
             @Override
             public void run() {
                 timer--;
                 powerupCooldown--;
+                eventCooldown--;
 
                 if (objective != null) {
                     objective.getScore(timeLeftKey).setScore(timer);
                     objective.getScore(playersLeftKey).setScore(activePlayers.size());
                     objective.getScore(powerupCooldownKey).setScore(powerupCooldown);
+                    objective.getScore("§6Random Event In:").setScore(eventCooldown); // Optional new line
                 }
 
                 if (bossBar != null) {
                     bossBar.setProgress(Math.max(0, timer / (double) maxTimer));
                 }
 
-
+                // Positive powerup trigger
                 if (powerupCooldown <= 0) {
                     Randompostiveeffect();
                     powerupCooldown = getConfig().getInt("game.powerup-cooldown-seconds", 30);
-
                 }
+
+                // RANDOM EVENT trigger
+                if (eventCooldown <= 0) {
+                    // Replace with actual plugin reference
+                    ChaosEventManager eventManager = new ChaosEventManager(ChaosPillars.this);
+                    eventManager.triggerRandomEvent();
+
+                    eventCooldown = getConfig().getInt("game.event-cooldown-seconds", 120);
+                    maxEventCooldown = eventCooldown;
+                }
+
 
                 if (timer <= 0) {
                     Bukkit.broadcastMessage(ChatColor.RED + "Time is up! Game over.");
@@ -345,7 +284,8 @@ public class ChaosPillars extends JavaPlugin implements Listener {
     }
 
 
-    private void endGame() {
+
+    public void endGame() {
         stopGameTasks();
         resetScoreboard();
 
@@ -365,11 +305,13 @@ public class ChaosPillars extends JavaPlugin implements Listener {
         }
     }
 
-    private void startGame() {
+    public void startGame() {
         activePlayers.clear();
         killAllMobs();
         startScoreboard();
-        randomFloor();
+        clearArea();
+        Bukkit.getScheduler().runTaskLater(this, () -> randomFloor(), 40L);
+
 
         if (bossBar != null) {
             bossBar.removeAll();
@@ -379,6 +321,7 @@ public class ChaosPillars extends JavaPlugin implements Listener {
         Random random = new Random();
         Material currentRoundPillarMaterial = pillarBlockTypes.get(random.nextInt(pillarBlockTypes.size()));
         Bukkit.broadcastMessage(ChatColor.LIGHT_PURPLE + "This round's pillars are made of " + ChatColor.YELLOW + currentRoundPillarMaterial.name().toLowerCase().replace('_', ' ') + "!");
+
 
         int radius = 12;
         int height = 50;
@@ -391,35 +334,23 @@ public class ChaosPillars extends JavaPlugin implements Listener {
             p.getInventory().clear();
         }
 
-        List<Location> basePillarLocations = new ArrayList<>();
         int pillarCount = 10;
+        Bukkit.getScheduler().runTaskLater(this, () -> {
+                    List<Location> basePillarLocations = generatePillars(currentRoundPillarMaterial, radius, height, baseY, pillarCount);
 
-        for (int i = 0; i < pillarCount; i++) {
-            double angle = 2 * Math.PI * i / pillarCount;
-            int x = (int) (radius * Math.cos(angle));
-            int z = (int) (radius * Math.sin(angle));
-
-            for (int y = 0; y < height; y++) {
-                Location loc = new Location(gameWorld, x, baseY + y, z);
-                loc.getBlock().setType(currentRoundPillarMaterial);
-
-            }
-
-            basePillarLocations.add(new Location(gameWorld, x, baseY, z));
-        }
-
-        for (int i = 0; i < players.size() && i < basePillarLocations.size(); i++) {
-            Location baseLoc = basePillarLocations.get(i);
-            Player player = players.get(i);
-            Location tp = baseLoc.clone().add(0.5, height, 0.5);
-            player.teleport(tp);
-            player.setGameMode(GameMode.SURVIVAL);
-            player.setHealth(20);
-            player.setFoodLevel(20);
-            player.clearActivePotionEffects();
-            activePlayers.add(player.getUniqueId());
-        }
-
+                    // Teleport players after pillar generation
+                    for (int i = 0; i < players.size() && i < basePillarLocations.size(); i++) {
+                        Location baseLoc = basePillarLocations.get(i);
+                        Player player = players.get(i);
+                        Location tp = baseLoc.clone().add(0.5, height, 0.5);
+                        player.teleport(tp);
+                        player.setGameMode(GameMode.SURVIVAL);
+                        player.setHealth(20);
+                        player.setFoodLevel(20);
+                        player.clearActivePotionEffects();
+                        activePlayers.add(player.getUniqueId());
+                    }
+        }, 40L);
 
         gameWorld.getWorldBorder().setSize(37);
 
@@ -678,6 +609,25 @@ public class ChaosPillars extends JavaPlugin implements Listener {
         }.runTaskTimer(this, 0L, 1L);
     }
 
+    private List<Location> generatePillars(Material material, int radius, int height, int baseY, int count) {
+        List<Location> basePillarLocations = new ArrayList<>();
+
+        for (int i = 0; i < count; i++) {
+            double angle = 2 * Math.PI * i / count;
+            int x = (int) (radius * Math.cos(angle));
+            int z = (int) (radius * Math.sin(angle));
+
+            for (int y = 0; y < height; y++) {
+                Location loc = new Location(gameWorld, x, baseY + y, z);
+                loc.getBlock().setType(material, false);
+            }
+
+            basePillarLocations.add(new Location(gameWorld, x, baseY, z));
+        }
+
+        return basePillarLocations;
+    }
+
 
     public void randomFloor() {
         if (floorBlockTypes.isEmpty()) {
@@ -690,6 +640,7 @@ public class ChaosPillars extends JavaPlugin implements Listener {
 
         // Pick one random material for the entire floor
         Material selectedMaterial = floorBlockTypes.get(new Random().nextInt(floorBlockTypes.size()));
+        currentRoundFloorMaterial = selectedMaterial; // ← store it
 
         for (int x = -radius; x <= radius; x++) {
             for (int z = -radius; z <= radius; z++) {
@@ -700,8 +651,13 @@ public class ChaosPillars extends JavaPlugin implements Listener {
             }
         }
 
-        getLogger().info("Generated circular floor with " + selectedMaterial + " at Y = -64.");
+        getLogger().info("Generated circular floor with " + selectedMaterial + " at Y = " + y);
+
+        // Broadcast message to players
+        Bukkit.broadcastMessage(ChatColor.AQUA + "This round's floor is made of " + ChatColor.YELLOW +
+                selectedMaterial.name().toLowerCase().replace('_', ' ') + ChatColor.AQUA + "!");
     }
+
 
 
     private void bedrockPlatform() {

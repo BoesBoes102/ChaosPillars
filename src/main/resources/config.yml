@@ -2,6 +2,7 @@ game:
   world-name: "world"
   timer-seconds: 600
   powerup-cooldown-seconds: 30
+  event-cooldown-seconds: 120
   item-give-interval-seconds: 4
   pillar-block-types:
     - BEDROCK

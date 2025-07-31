@@ -2,66 +2,54 @@
 Pillars of Chaos is a minigame based of Cubecraft Pillars of Fortune but with more chaos and for java and with configuration
 
 # Features
-- Teleports up to 10 players onto randomly assigned bedrock towers arranged in a circle
-- Permanent world border set around the arena to keep players inside
-- Random items periodically dropped to players during the game
-- 10-minute timer displayed via a boss bar and sidebar scoreboard
-- Players are eliminated on death or quitting; last player standing wins
-- Game ends automatically when only one player remains or time runs out
-- Prevents mob spawning except via spawner eggs
-- Clears and prepares the arena automatically on server start and game start
+- Spawns 10 players in a circle.
+- Custom pillar types/blocks
+- Custom floor types/blocks
+- Easily configurable
+- Automatically cleans up for next game
+- Custom events for more chaos
+- statistics option
 
 ---
 
-## Commands
+# Commands
 
 - `/startchaos` - Starts the Chaos Pillars game (requires OP)
 - `/stopchaos` - Stops the current game and resets (requires OP)
+- '/chaosreload' - Reloads config
+- '/stats' - Displays stats
+---
+
+# Installation
+
+Put the jar in your plugins folder
+have paper 1.21.7
+do /startchaos to start.
 
 ---
 
-## Installation
+# Configuration
 
-1. Place the compiled ChaosPillars.jar into your server's `plugins` folder.
-2. Start or restart your Paper server.
-3. Ensure the world named `world` exists, or adjust the code to use your desired world.
-4. Use `/startchaos` to begin the game when enough players are online.
+Configuration can be found in the plugin file and can be reloaded using /chaosreload.
 
 ---
 
-## Requirements
+# Development
 
-- Paper Minecraft server (1.21.7 recommended)
-- Java 17+
-- Proper permissions (OP) to start/stop the game
+working on a version for more than 10 players
 
 ---
 
-## Configuration
+# License
 
-Currently, there are no external config files. Future updates may include configurable settings.
-
----
-
-## Development
-
-Feel free to fork and modify the plugin under the [MIT License](LICENSE).
-Coming soon
-- Config for time and more
-- custom items
-- custom floor and pillar types
----
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
+read the license file for this
+MIT
 
 ---
 
-## Contact
+# Contact
 
-For questions, issues, or contributions, open an issue or submit a pull request on GitHub.
-
+Send me a message on dc BoesBoes102
 ---
 
-Enjoy the chaos and may the best player win! 🎉
+
