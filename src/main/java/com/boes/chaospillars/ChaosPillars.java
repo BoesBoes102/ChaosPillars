@@ -31,7 +31,6 @@ import java.util.stream.Collectors;
 public class ChaosPillars extends JavaPlugin implements Listener {
     private int eventCooldown;
     public Material currentRoundFloorMaterial;
-    private int maxEventCooldown;
     private int powerupCooldown = 30;
     private int maxTimer = 600;
     private int timer = 600;
@@ -52,7 +51,7 @@ public class ChaosPillars extends JavaPlugin implements Listener {
     private StatsManager statsManager;
     private List<Material> floorBlockTypes = new ArrayList<>();
     private List<Material> pillarBlockTypes = new ArrayList<>();
-    private final int itemGiveIntervalTicks = 60;
+    private int itemGiveIntervalTicks = 60;
 
 
     private GameState gameState = GameState.IDLE;
@@ -81,12 +80,12 @@ public class ChaosPillars extends JavaPlugin implements Listener {
             getServer().getPluginManager().disablePlugin(this);
             return;
         }
-        getCommand("chaos").setExecutor(new ChaosCommand(this));
-        getCommand("chaos").setTabCompleter(new ChaosCommand(this));
+        Objects.requireNonNull(getCommand("chaos")).setExecutor(new ChaosCommand(this));
+        Objects.requireNonNull(getCommand("chaos")).setTabCompleter(new ChaosCommand(this));
 
         clearArea();
         gamerule();
-        Bukkit.getScheduler().runTaskLater(this, () -> bedrockPlatform(), 40L);
+        Bukkit.getScheduler().runTaskLater(this, this::bedrockPlatform, 40L);
 
         gameWorld.getWorldBorder().setCenter(0.5, 0.5);
         gameWorld.getWorldBorder().setSize(37);
@@ -123,7 +122,7 @@ public class ChaosPillars extends JavaPlugin implements Listener {
 
         powerupCooldown = getConfig().getInt("game.powerup-cooldown-seconds", 30);
 
-        int itemGiveIntervalTicks = getConfig().getInt("game.item-give-interval-seconds", 4) * 20;
+        itemGiveIntervalTicks = getConfig().getInt("game.item-give-interval-seconds", 4) * 20;
 
         List<String> floorStrings = getConfig().getStringList("floor-block-types");
         List<Material> parsedFloorMaterials = floorStrings.stream()
@@ -236,7 +235,7 @@ public class ChaosPillars extends JavaPlugin implements Listener {
         timer = getConfig().getInt("game.timer-seconds", 600);
         powerupCooldown = getConfig().getInt("game.powerup-cooldown-seconds", 30);
         eventCooldown = getConfig().getInt("game.event-cooldown-seconds", 120);
-        maxEventCooldown = eventCooldown;
+
 
         gameTask = new BukkitRunnable() {
             @Override
@@ -269,7 +268,7 @@ public class ChaosPillars extends JavaPlugin implements Listener {
                     eventManager.triggerRandomEvent();
 
                     eventCooldown = getConfig().getInt("game.event-cooldown-seconds", 120);
-                    maxEventCooldown = eventCooldown;
+
                 }
 
 
@@ -288,7 +287,8 @@ public class ChaosPillars extends JavaPlugin implements Listener {
     public void endGame() {
         stopGameTasks();
         resetScoreboard();
-
+        gameWorld.setTime(1000);
+        gameWorld.setStorm(false);
         Location spawn = gameWorld.getSpawnLocation();
         for (Player player : Bukkit.getOnlinePlayers()) {
             player.teleport(spawn);
@@ -296,9 +296,10 @@ public class ChaosPillars extends JavaPlugin implements Listener {
         }
         clearArea();
         activePlayers.clear();
-        Bukkit.getScheduler().runTaskLater(this, () -> bedrockPlatform(), 40L);
+        Bukkit.getScheduler().runTaskLater(this, this::bedrockPlatform, 40L);
         killAllMobs();
-        setGameState(GameState.IDLE);
+        Bukkit.getScheduler().runTaskLater(this, () -> setGameState(GameState.IDLE), 60L);
+
         if (bossBar != null) {
             bossBar.removeAll();
             bossBar = null;
@@ -310,7 +311,7 @@ public class ChaosPillars extends JavaPlugin implements Listener {
         killAllMobs();
         startScoreboard();
         clearArea();
-        Bukkit.getScheduler().runTaskLater(this, () -> randomFloor(), 40L);
+        Bukkit.getScheduler().runTaskLater(this, this::randomFloor, 40L);
 
 
         if (bossBar != null) {
@@ -350,6 +351,7 @@ public class ChaosPillars extends JavaPlugin implements Listener {
                         player.clearActivePotionEffects();
                         activePlayers.add(player.getUniqueId());
                     }
+                    frozenPlayers.addAll(activePlayers);
         }, 40L);
 
         gameWorld.getWorldBorder().setSize(37);
@@ -365,7 +367,7 @@ public class ChaosPillars extends JavaPlugin implements Listener {
         bossBar.setVisible(true);
 
 
-        frozenPlayers.addAll(activePlayers);
+
         setGameState(GameState.COUNTDOWN);
 
         new BukkitRunnable() {
@@ -723,7 +725,7 @@ public class ChaosPillars extends JavaPlugin implements Listener {
         Entity damager = event.getDamager();
 
         if (damager instanceof Snowball || damager instanceof Egg) {
-            if (!(damager instanceof Projectile projectile)) return;
+            Projectile projectile = (Projectile) damager;
             if (!(projectile.getShooter() instanceof Player shooter)) return;
 
             // Knockback direction = from shooter to victim

@@ -23,21 +23,60 @@ public class ChaosEventManager {
 
     public void triggerRandomEvent() {
         int index = random.nextInt(11);
+
+        String eventName;
+
         switch (index) {
-            case 0 -> changeWeather();
-            case 1 -> randomTimeChange();
-            case 2 -> swapPositions();
-            case 3 -> swapInventories();
-            case 4 -> spawnFakeTNTOnPlayers();
-            case 5 -> dropAnvilsAbovePlayers();
-            case 6 -> randomNegativeEffect();
-            case 7 -> giveThrowable();
-            case 8 -> swapHealthFoodSaturation();
-            case 9 -> makeEveryoneJump();
-            case 10 -> forceSneakToggle();
+            case 0 -> {
+                changeWeather();
+                eventName = "Weather Change";
+            }
+            case 1 -> {
+                randomTimeChange();
+                eventName = "Time Shift";
+            }
+            case 2 -> {
+                swapPositions();
+                eventName = "Swap Positions";
+            }
+            case 3 -> {
+                swapInventories();
+                eventName = "Swap Inventories";
+            }
+            case 4 -> {
+                spawnFakeTNTOnPlayers();
+                eventName = "TNT";
+            }
+            case 5 -> {
+                dropAnvilsAbovePlayers();
+                eventName = "Anvil";
+            }
+            case 6 -> {
+                randomNegativeEffect();
+                eventName = "Negative Potion Effect";
+            }
+            case 7 -> {
+                giveThrowable();
+                eventName = "Throwable Items";
+            }
+            case 8 -> {
+                swapHealthFoodSaturation();
+                eventName = "Swap Health";
+            }
+            case 9 -> {
+                makeEveryoneJump();
+                eventName = "Simon say jump";
+            }
+            case 10 -> {
+                forceSneakToggle();
+                eventName = "Simon say sneak";
+            }
+            default -> eventName = "Unknown Event";
         }
-        Bukkit.broadcastMessage(ChatColor.LIGHT_PURPLE + "[Chaos] A random event has occurred!");
+
+        Bukkit.broadcastMessage(ChatColor.LIGHT_PURPLE + "[Chaos] " + ChatColor.YELLOW + eventName + ChatColor.LIGHT_PURPLE + " event has occurred!");
     }
+
 
     public void changeWeather() {
         World world = Bukkit.getWorlds().getFirst();
