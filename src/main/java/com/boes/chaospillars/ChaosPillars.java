@@ -255,15 +255,15 @@ public class ChaosPillars extends JavaPlugin implements Listener {
                     bossBar.setProgress(Math.max(0, timer / (double) maxTimer));
                 }
 
-                // Positive powerup trigger
+
                 if (powerupCooldown <= 0) {
                     Randompostiveeffect();
                     powerupCooldown = getConfig().getInt("game.powerup-cooldown-seconds", 30);
                 }
 
-                // RANDOM EVENT trigger
+
                 if (eventCooldown <= 0) {
-                    // Replace with actual plugin reference
+
                     ChaosEventManager eventManager = new ChaosEventManager(ChaosPillars.this);
                     eventManager.triggerRandomEvent();
 
