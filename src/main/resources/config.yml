@@ -1,14 +1,15 @@
 game:
   world-name: "world"
-  timer-seconds: 600
+  timer-seconds: 300
   powerup-cooldown-seconds: 30
-  event-cooldown-seconds: 40
-  item-give-interval-seconds: 4
+  event-cooldown-seconds: 20
+  item-give-interval-seconds: 3
   pillar-block-types:
     - BEDROCK
     - SAND
     - NETHERRACK
     - END_STONE
+    - OAK_LOG
   floor-block-types:
     - END_STONE
     - SLIME_BLOCK
@@ -16,7 +17,6 @@ game:
     - HONEY_BLOCK
     - GRASS_BLOCK
     - OAK_LOG
-    - CHERRY_LEAVES
     - NETHERRACK
     - BEDROCK
     - DIAMOND_BLOCK

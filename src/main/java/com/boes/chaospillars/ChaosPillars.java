@@ -65,11 +65,11 @@ public class ChaosPillars extends JavaPlugin implements Listener {
 
     @Override
     public void onEnable() {
-        saveDefaultConfig(); // Loads config.yml if not already created
+        saveDefaultConfig();
         reloadGameConfig();
 
-        // Setup stats manager
-        statsManager = new StatsManager(this); // create this field if you haven't already
+
+        statsManager = new StatsManager(this);
         playerStats = statsManager.loadStats();
 
         getLogger().info("Chaos Pillars enabled.");
@@ -279,7 +279,7 @@ public class ChaosPillars extends JavaPlugin implements Listener {
             }
         };
 
-        gameTask.runTaskTimer(this, 20L, 20L); // 1-second intervals
+        gameTask.runTaskTimer(this, 20L, 20L);
     }
 
 
@@ -339,7 +339,7 @@ public class ChaosPillars extends JavaPlugin implements Listener {
         Bukkit.getScheduler().runTaskLater(this, () -> {
                     List<Location> basePillarLocations = generatePillars(currentRoundPillarMaterial, radius, height, baseY, pillarCount);
 
-                    // Teleport players after pillar generation
+
                     for (int i = 0; i < players.size() && i < basePillarLocations.size(); i++) {
                         Location baseLoc = basePillarLocations.get(i);
                         Player player = players.get(i);
@@ -479,7 +479,7 @@ public class ChaosPillars extends JavaPlugin implements Listener {
             killerId = lastDamager.get(deadId);
         }
 
-        // Update stats
+
         PlayerStats deadStats = playerStats.computeIfAbsent(deadId, k -> new PlayerStats());
         deadStats.addDeath();
 
@@ -493,9 +493,9 @@ public class ChaosPillars extends JavaPlugin implements Listener {
             event.setDeathMessage(ChatColor.RED + dead.getName() + ChatColor.GRAY + " died.");
         }
 
-        lastDamager.remove(deadId); // Cleanup
+        lastDamager.remove(deadId);
 
-        // Game logic
+
         activePlayers.remove(deadId);
         dead.setGameMode(GameMode.SPECTATOR);
 
@@ -640,9 +640,9 @@ public class ChaosPillars extends JavaPlugin implements Listener {
         int radius = 18;
         int y = -64;
 
-        // Pick one random material for the entire floor
+
         Material selectedMaterial = floorBlockTypes.get(new Random().nextInt(floorBlockTypes.size()));
-        currentRoundFloorMaterial = selectedMaterial; // ← store it
+        currentRoundFloorMaterial = selectedMaterial;
 
         for (int x = -radius; x <= radius; x++) {
             for (int z = -radius; z <= radius; z++) {
@@ -655,7 +655,7 @@ public class ChaosPillars extends JavaPlugin implements Listener {
 
         getLogger().info("Generated circular floor with " + selectedMaterial + " at Y = " + y);
 
-        // Broadcast message to players
+
         Bukkit.broadcastMessage(ChatColor.AQUA + "This round's floor is made of " + ChatColor.YELLOW +
                 selectedMaterial.name().toLowerCase().replace('_', ' ') + ChatColor.AQUA + "!");
     }
@@ -665,7 +665,7 @@ public class ChaosPillars extends JavaPlugin implements Listener {
     private void bedrockPlatform() {
         if (gameWorld == null) return;
 
-        int size = 37; // World border size
+        int size = 37;
         int halfSize = size / 2;
         int floorY = -64;
         int centerX = 0;
@@ -728,9 +728,8 @@ public class ChaosPillars extends JavaPlugin implements Listener {
             Projectile projectile = (Projectile) damager;
             if (!(projectile.getShooter() instanceof Player shooter)) return;
 
-            // Knockback direction = from shooter to victim
             org.bukkit.util.@NotNull Vector direction = victim.getLocation().toVector().subtract(shooter.getLocation().toVector()).normalize();
-            @NotNull Vector knockback = direction.multiply(0.8).setY(0.5); // Horizontal + small lift
+            @NotNull Vector knockback = direction.multiply(0.8).setY(0.5);
 
             victim.setVelocity(knockback);
         }
