@@ -42,6 +42,11 @@ public class StatsManager {
             statsConfig.set(path + ".gamesPlayed", stats.getGamesPlayed());
             statsConfig.set(path + ".kills", stats.getKills());
             statsConfig.set(path + ".deaths", stats.getDeaths());
+            statsConfig.set(path + ".winStreak", stats.getWinStreak());
+            statsConfig.set(path + ".highestWinStreak", stats.getHighestWinStreak());
+            statsConfig.set(path + ".lossStreak", stats.getLossStreak());
+            statsConfig.set(path + ".highestLossStreak", stats.getHighestLossStreak());
+
         }
 
         try {
@@ -64,6 +69,10 @@ public class StatsManager {
             stats.setGamesPlayed(statsConfig.getInt("players." + uuidString + ".gamesPlayed", 0));
             stats.setKills(statsConfig.getInt("players." + uuidString + ".kills", 0));
             stats.setDeaths(statsConfig.getInt("players." + uuidString + ".deaths", 0));
+            stats.setWinStreak(statsConfig.getInt("players." + uuidString + ".winStreak", 0));
+            stats.setHighestWinStreak(statsConfig.getInt("players." + uuidString + ".highestWinStreak", 0));
+            stats.setLossStreak(statsConfig.getInt("players." + uuidString + ".lossStreak", 0));
+            stats.setHighestLossStreak(statsConfig.getInt("players." + uuidString + ".highestLossStreak", 0));
 
             loadedStats.put(uuid, stats);
         }

@@ -5,6 +5,10 @@ public class PlayerStats {
     private int gamesPlayed;
     private int kills;
     private int deaths;
+    private int winStreak;
+    private int highestWinStreak;
+    private int lossStreak = 0;
+    private int highestLossStreak = 0;
 
     public int getWins() {
         return wins;
@@ -60,5 +64,48 @@ public class PlayerStats {
 
     public double getKDR() {
         return deaths == 0 ? kills : (double) kills / deaths;
+    }
+
+    public int getWinStreak() {
+        return winStreak;
+    }
+
+    public void setWinStreak(int winStreak) {
+        this.winStreak = winStreak;
+    }
+
+    public int getHighestWinStreak() {
+        return highestWinStreak;
+    }
+
+    public void setHighestWinStreak(int highestWinStreak) {
+        this.highestWinStreak = highestWinStreak;
+    }
+
+    public int getLossStreak() {
+        return lossStreak;
+    }
+
+    public void setLossStreak(int lossStreak) {
+        this.lossStreak = lossStreak;
+    }
+
+    public int getHighestLossStreak() {
+        return highestLossStreak;
+    }
+
+    public void setHighestLossStreak(int highestLossStreak) {
+        this.highestLossStreak = highestLossStreak;
+    }
+
+    public void addLoss() {
+        lossStreak++;
+        if (lossStreak > highestLossStreak) {
+            highestLossStreak = lossStreak;
+        }
+    }
+
+    public void resetLossStreak() {
+        lossStreak = 0;
     }
 }

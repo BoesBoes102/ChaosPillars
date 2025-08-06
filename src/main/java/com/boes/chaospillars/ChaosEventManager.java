@@ -3,7 +3,6 @@ package com.boes.chaospillars;
 import org.bukkit.*;
 import org.bukkit.entity.*;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.util.Vector;
@@ -12,22 +11,27 @@ import java.util.*;
 
 public class ChaosEventManager {
 
-    private final JavaPlugin plugin;
+    private final ChaosPillars plugin;
     private final Random random = new Random();
 
-    public ChaosEventManager(JavaPlugin plugin) {
+    public ChaosEventManager(ChaosPillars plugin) {
         this.plugin = plugin;
     }
 
     private List<Player> getActivePlayers() {
-        return new ArrayList<>(Bukkit.getOnlinePlayers().stream()
-                .filter(p -> p.isOnline() && !p.isDead() && p.getGameMode() != GameMode.SPECTATOR)
-                .toList());
+        List<Player> result = new ArrayList<>();
+        for (UUID uuid : plugin.getActivePlayers()) {
+            Player player = Bukkit.getPlayer(uuid);
+            if (player != null && player.isOnline()) {
+                result.add(player);
+            }
+        }
+        return result;
     }
 
 
     public void triggerRandomEvent() {
-        int index = random.nextInt(11);
+        int index = random.nextInt(10);
         String eventName;
 
         switch (index) {
@@ -48,12 +52,12 @@ public class ChaosEventManager {
                 eventName = "Swap Inventories";
             }
             case 4 -> {
-                spawnFakeTNTOnPlayers();
-                eventName = "TNT";
+                applyGlow();
+                eventName = "No Hiding";
             }
             case 5 -> {
                 dropAnvilsAbovePlayers();
-                eventName = "Anvil";
+                eventName = "Anvil Drop";
             }
             case 6 -> {
                 randomNegativeEffect();
@@ -70,10 +74,6 @@ public class ChaosEventManager {
             case 9 -> {
                 makeEveryoneJump();
                 eventName = "Simon Says Jump";
-            }
-            case 10 -> {
-                forceSneakToggle();
-                eventName = "Simon Says Sneak";
             }
             default -> eventName = "Unknown Event";
         }
@@ -96,10 +96,14 @@ public class ChaosEventManager {
         if (players.size() < 2) return;
 
         List<Location> locations = players.stream().map(Player::getLocation).toList();
-        Collections.shuffle(players);
+        List<Player> shuffledPlayers = new ArrayList<>(players);
+
+        do {
+            Collections.shuffle(shuffledPlayers);
+        } while (noDoubles(players, shuffledPlayers));
 
         for (int i = 0; i < players.size(); i++) {
-            Location loc = locations.get((i + 1) % players.size());
+            Location loc = locations.get(players.indexOf(shuffledPlayers.get(i)));
             players.get(i).teleport(loc);
         }
     }
@@ -118,27 +122,22 @@ public class ChaosEventManager {
             offhands.add(player.getInventory().getItemInOffHand().clone());
         }
 
-        Collections.shuffle(players);
+        List<Player> shuffledPlayers = new ArrayList<>(players);
+        do {
+            Collections.shuffle(shuffledPlayers);
+        } while (noDoubles(players, shuffledPlayers));
 
         for (int i = 0; i < players.size(); i++) {
-            int from = (i + 1) % players.size();
-
-            players.get(i).getInventory().setContents(contents.get(from));
-            players.get(i).getInventory().setArmorContents(armor.get(from));
-            players.get(i).getInventory().setItemInOffHand(offhands.get(from));
+            int fromIndex = players.indexOf(shuffledPlayers.get(i));
+            players.get(i).getInventory().setContents(contents.get(fromIndex));
+            players.get(i).getInventory().setArmorContents(armor.get(fromIndex));
+            players.get(i).getInventory().setItemInOffHand(offhands.get(fromIndex));
         }
     }
 
-    public void spawnFakeTNTOnPlayers() {
+    public void applyGlow() {
         for (Player player : getActivePlayers()) {
-            Location loc = player.getLocation().clone().add(0, 2, 0);
-            World world = loc.getWorld();
-            if (world == null) continue;
-
-            FallingBlock tnt = world.spawnFallingBlock(loc, Material.TNT.createBlockData());
-            tnt.setDropItem(false);
-            tnt.setHurtEntities(false);
-            tnt.setVelocity(new Vector(0, -0.1, 0));
+            player.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, 20 * 10, 0, false, false, true));
         }
     }
 
@@ -156,7 +155,6 @@ public class ChaosEventManager {
         PotionEffectType[] negativeEffectTypes = {
                 PotionEffectType.BLINDNESS,
                 PotionEffectType.NAUSEA,
-                PotionEffectType.INSTANT_DAMAGE,
                 PotionEffectType.HUNGER,
                 PotionEffectType.POISON,
                 PotionEffectType.SLOWNESS,
@@ -167,12 +165,9 @@ public class ChaosEventManager {
                 PotionEffectType.LEVITATION
         };
 
-        Random rand = new Random();
-
         for (Player player : getActivePlayers()) {
-            PotionEffectType randomEffect = negativeEffectTypes[rand.nextInt(negativeEffectTypes.length)];
-            PotionEffect effect = new PotionEffect(randomEffect, duration, amplifier);
-            player.addPotionEffect(effect);
+            PotionEffectType randomEffect = negativeEffectTypes[random.nextInt(negativeEffectTypes.length)];
+            player.addPotionEffect(new PotionEffect(randomEffect, duration, amplifier));
         }
     }
 
@@ -198,10 +193,13 @@ public class ChaosEventManager {
             saturationList.add(player.getSaturation());
         }
 
-        Collections.shuffle(players);
+        List<Player> shuffledPlayers = new ArrayList<>(players);
+        do {
+            Collections.shuffle(shuffledPlayers);
+        } while (noDoubles(players, shuffledPlayers));
 
         for (int i = 0; i < players.size(); i++) {
-            int from = (i + 1) % players.size();
+            int from = players.indexOf(shuffledPlayers.get(i));
             Player target = players.get(i);
 
             double newHealth = Math.min(healthList.get(from), target.getMaxHealth());
@@ -216,15 +214,12 @@ public class ChaosEventManager {
             player.setVelocity(player.getVelocity().add(new Vector(0, 1.2, 0)));
         }
     }
-
-    public void forceSneakToggle() {
-        for (Player player : getActivePlayers()) {
-            player.setSneaking(true);
-        }
-        plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
-            for (Player player : getActivePlayers()) {
-                player.setSneaking(false);
+    private boolean noDoubles(List<Player> original, List<Player> shuffled) {
+        for (int i = 0; i < original.size(); i++) {
+            if (original.get(i).equals(shuffled.get(i))) {
+                return true;
             }
-        }, 20L);
+        }
+        return false;
     }
 }

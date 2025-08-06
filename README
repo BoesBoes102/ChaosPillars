@@ -8,29 +8,29 @@ Pillars of Chaos is a minigame based of Cubecraft Pillars of Fortune but with mo
 - Easily configurable
 - Automatically cleans up for next game
 - Custom events for more chaos
-- statistics option
+- Custom scoreboard with stats
 
 ---
 
 # Commands
 
-- `/startchaos` - Starts the Chaos Pillars game (requires OP)
-- `/stopchaos` - Stops the current game and resets (requires OP)
-- '/chaosreload' - Reloads config
-- '/stats' - Displays stats
+- `/chaos start` - Starts the Chaos Pillars game (requires OP)
+- `/chaos stop` - Stops the current game and resets (requires OP)
+- '/chaos reload' - Reloads config
+- '/choas stats' - Displays stats
 ---
 
 # Installation
 
 Put the jar in your plugins folder
 have paper 1.21.7
-do /startchaos to start.
+preferably have a void world called world
 
 ---
 
 # Configuration
 
-Configuration can be found in the plugin file and can be reloaded using /chaosreload.
+Configuration can be found in the plugin file and can be reloaded using /chaos reload.
 
 ---
 

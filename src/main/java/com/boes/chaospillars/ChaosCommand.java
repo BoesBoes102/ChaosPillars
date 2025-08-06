@@ -4,6 +4,7 @@ package com.boes.chaospillars;
 import com.boes.chaospillars.enums.GameState;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.command.*;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
@@ -78,15 +79,38 @@ public class ChaosCommand implements CommandExecutor, TabCompleter {
                 return true;
 
             case "stats":
-                PlayerStats stats = plugin.playerStats.getOrDefault(player.getUniqueId(), new PlayerStats());
-                player.sendMessage(ChatColor.GOLD + "=== Your Chaos Pillars Stats ===");
+                PlayerStats stats;
+                if (args.length == 2) {
+                    String targetName = args[1];
+                    OfflinePlayer target = Bukkit.getOfflinePlayer(targetName);
+
+
+                    if (!target.hasPlayedBefore() && !target.isOnline()) {
+                        player.sendMessage(ChatColor.RED + "Player '" + targetName + "' not found.");
+                        return true;
+                    }
+
+                    stats = plugin.playerStats.getOrDefault(target.getUniqueId(), new PlayerStats());
+                    player.sendMessage(ChatColor.GOLD + "=== Chaos Pillars Stats for " + target.getName() + " ===");
+                } else {
+
+                    stats = plugin.playerStats.getOrDefault(player.getUniqueId(), new PlayerStats());
+                    player.sendMessage(ChatColor.GOLD + "=== Your Chaos Pillars Stats ===");
+                }
+
                 player.sendMessage(ChatColor.YELLOW + "Wins: " + ChatColor.WHITE + stats.getWins());
                 player.sendMessage(ChatColor.YELLOW + "Games Played: " + ChatColor.WHITE + stats.getGamesPlayed());
                 player.sendMessage(ChatColor.YELLOW + "Win Rate: " + ChatColor.WHITE + String.format("%.1f", stats.getWinRate()) + "%");
                 player.sendMessage(ChatColor.YELLOW + "Kills: " + ChatColor.WHITE + stats.getKills());
                 player.sendMessage(ChatColor.YELLOW + "Deaths: " + ChatColor.WHITE + stats.getDeaths());
                 player.sendMessage(ChatColor.YELLOW + "KDR: " + ChatColor.WHITE + String.format("%.2f", stats.getKDR()));
+                player.sendMessage(ChatColor.YELLOW + "Win Streak: " + ChatColor.WHITE + stats.getWinStreak());
+                player.sendMessage(ChatColor.YELLOW + "Highest Win Streak: " + ChatColor.WHITE + stats.getHighestWinStreak());
+                player.sendMessage(ChatColor.YELLOW + "Loss Streak: " + ChatColor.WHITE + stats.getLossStreak());
+                player.sendMessage(ChatColor.YELLOW + "Highest Loss Streak: " + ChatColor.WHITE + stats.getHighestLossStreak());
                 return true;
+
+
 
             default:
                 player.sendMessage(ChatColor.RED + "Unknown subcommand. Use /chaos <start|stop|reload|stats>");
@@ -104,6 +128,20 @@ public class ChaosCommand implements CommandExecutor, TabCompleter {
             suggestions.add("stats");
             return suggestions;
         }
+
+        if (args.length == 2 && args[0].equalsIgnoreCase("stats")) {
+            String partialName = args[1].toLowerCase();
+            List<String> playerNames = new ArrayList<>();
+            for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
+                String name = onlinePlayer.getName();
+                if (name.toLowerCase().startsWith(partialName)) {
+                    playerNames.add(name);
+                }
+            }
+            return playerNames;
+        }
+
         return Collections.emptyList();
     }
+
 }
