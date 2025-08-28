@@ -10,6 +10,23 @@ game:
     - NETHERRACK
     - END_STONE
     - OAK_LOG
+    - CRAFTING_TABLE
+    - IRON_BLOCK
+    - OAK_LEAVES
+    - COBBLESTONE
+    - OBSIDIAN
+    - GOLD_BLOCK
+    - REDSTONE_BLOCK
+    - EMERALD_BLOCK
+    - TNT
+    - NOTE_BLOCK
+    - MOSSY_COBBLESTONE
+    - PRISMARINE
+    - HAY_BLOCK
+    - MELON
+    - PUMPKIN
+    - MANGROVE_LOG
+    - AMETHYST_BLOCK
   floor-block-types:
     - END_STONE
     - SLIME_BLOCK
@@ -21,3 +38,20 @@ game:
     - BEDROCK
     - DIAMOND_BLOCK
     - COBWEB
+    - CRAFTING_TABLE
+    - SOUL_SAND
+    - MAGMA_BLOCK
+    - ICE
+    - PACKED_ICE
+    - BLUE_ICE
+    - DRIPSTONE_BLOCK
+    - SCAFFOLDING
+    - LAVA
+    - WATER
+    - GLOWSTONE
+    - SEA_LANTERN
+    - TERRACOTTA
+    - SHROOMLIGHT
+    - WARPED_NYLIUM
+    - CRYING_OBSIDIAN
+
