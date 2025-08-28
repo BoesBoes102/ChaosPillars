@@ -1,5 +1,7 @@
 package com.boes.chaospillars;
 
+import net.md_5.bungee.api.ChatMessageType;
+import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import com.boes.chaospillars.enums.GameState;
@@ -17,6 +19,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.scoreboard.*;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.boss.BossBar;
@@ -33,7 +36,6 @@ public class ChaosPillars extends JavaPlugin implements Listener {
     private int eventCooldown;
     public Material currentRoundFloorMaterial;
     private int powerupCooldown = 30;
-    private int maxTimer = 600;
     private int timer = 600;
     public Map<UUID, PlayerStats> playerStats = new HashMap<>();
     private final Map<UUID, UUID> lastDamager = new HashMap<>();
@@ -44,13 +46,14 @@ public class ChaosPillars extends JavaPlugin implements Listener {
     private Scoreboard scoreboard;
     private Objective objective;
     private World gameWorld;
-    private BossBar bossBar;
     private final Set<UUID> frozenPlayers = new HashSet<>();
     private StatsManager statsManager;
     private List<Material> floorBlockTypes = new ArrayList<>();
     private List<Material> pillarBlockTypes = new ArrayList<>();
     private int itemGiveIntervalTicks = 60;
-    private boolean lavaStarted = false;
+    private BukkitTask lavaTask;
+    private BossBar lavaBossBar;
+
 
     public Set<UUID> getActivePlayers() {
         return activePlayers;
@@ -69,6 +72,7 @@ public class ChaosPillars extends JavaPlugin implements Listener {
     public void onEnable() {
         saveDefaultConfig();
         reloadGameConfig();
+        resetScoreboard();
         startScoreboard();
 
         statsManager = new StatsManager(this);
@@ -119,8 +123,7 @@ public class ChaosPillars extends JavaPlugin implements Listener {
         String worldName = getConfig().getString("game.world-name", "world");
         gameWorld = Bukkit.getWorld(worldName);
 
-        maxTimer = getConfig().getInt("game.timer-seconds", 600);
-        timer = maxTimer;
+        timer = getConfig().getInt("game.timer-seconds", 600);
 
         powerupCooldown = getConfig().getInt("game.powerup-cooldown-seconds", 30);
 
@@ -233,8 +236,10 @@ public class ChaosPillars extends JavaPlugin implements Listener {
 
         PlayerStats stats = playerStats.getOrDefault(player.getUniqueId(), new PlayerStats());
 
-        int score = 10;
-
+        int score = 11;
+        for (String entry : scoreboard.getEntries()) {
+            scoreboard.resetScores(entry);
+        }
         idleObjective.getScore("§6Chaos Pillars").setScore(score--);
         idleObjective.getScore("§7─────────────── ").setScore(score--);
         idleObjective.getScore("§ePlayer: §f" + player.getName()).setScore(score--);
@@ -264,7 +269,7 @@ public class ChaosPillars extends JavaPlugin implements Listener {
         objective.getScore("§aPlayers Alive: §f" + activePlayers.size()).setScore(score--);
         objective.getScore("§bPowerup In: §f" + powerupCooldown + "s").setScore(score--);
         objective.getScore("§dEvent In: §f" + eventCooldown + "s").setScore(score--);
-
+        objective.getScore("§7─────────────── ").setScore(score--);
 
         for (Player player : Bukkit.getOnlinePlayers()) {
             player.setScoreboard(scoreboard);
@@ -302,13 +307,9 @@ public class ChaosPillars extends JavaPlugin implements Listener {
 
                 updateGameScoreboard();
 
-                if (bossBar != null) {
-                    bossBar.setProgress(Math.max(0, timer / (double) maxTimer));
-                }
-
 
                 if (powerupCooldown <= 0) {
-                    Randompostiveeffect();
+                    RandomPositiveEffect();
                     powerupCooldown = getConfig().getInt("game.powerup-cooldown-seconds", 30);
                 }
 
@@ -321,13 +322,6 @@ public class ChaosPillars extends JavaPlugin implements Listener {
                     eventCooldown = getConfig().getInt("game.event-cooldown-seconds", 120);
 
                 }
-
-                if (timer <= 120 && !lavaStarted) {
-                    lavaStarted = true;
-                    Bukkit.broadcastMessage(ChatColor.GOLD + "Lava starting to rise!");
-                    startLavaRise();
-                }
-
 
                 if (timer <= 0) {
                     Bukkit.broadcastMessage(ChatColor.RED + "Time is up! Game over.");
@@ -342,11 +336,13 @@ public class ChaosPillars extends JavaPlugin implements Listener {
 
 
     public void endGame() {
+        stopLavaRise();
+        stopLavaCountdown();
         stopGameTasks();
         gameWorld.setTime(1000);
         gameWorld.setStorm(false);
-        lavaStarted = false;
         Location spawn = gameWorld.getSpawnLocation();
+
         for (Player player : Bukkit.getOnlinePlayers()) {
             player.teleport(spawn);
             player.setGameMode(GameMode.SPECTATOR);
@@ -357,10 +353,6 @@ public class ChaosPillars extends JavaPlugin implements Listener {
         killAllMobs();
         Bukkit.getScheduler().runTaskLater(this, () -> setGameState(GameState.IDLE), 80L);
 
-        if (bossBar != null) {
-            bossBar.removeAll();
-            bossBar = null;
-        }
         resetScoreboard();
         for (Player player : Bukkit.getOnlinePlayers()) {
             updateIdleScoreboard(player);
@@ -372,15 +364,11 @@ public class ChaosPillars extends JavaPlugin implements Listener {
     public void startGame() {
         activePlayers.clear();
         killAllMobs();
+        stopGameTasks();
         clearArea();
         Bukkit.getScheduler().runTaskLater(this, this::randomFloor, 40L);
-
-
-        if (bossBar != null) {
-            bossBar.removeAll();
-            bossBar = null;
-        }
-
+        gameWorld.setTime(1000);
+        gameWorld.setStorm(false);
         Random random = new Random();
         Material currentRoundPillarMaterial = pillarBlockTypes.get(random.nextInt(pillarBlockTypes.size()));
         Bukkit.broadcastMessage(ChatColor.LIGHT_PURPLE + "This round's pillars are made of " + ChatColor.YELLOW + currentRoundPillarMaterial.name().toLowerCase().replace('_', ' ') + "!");
@@ -418,22 +406,10 @@ public class ChaosPillars extends JavaPlugin implements Listener {
 
         gameWorld.getWorldBorder().setSize(37);
 
-        bossBar = Bukkit.createBossBar(ChatColor.GOLD + "Time Remaining", BarColor.YELLOW, BarStyle.SEGMENTED_10);
-        for (UUID uuid : activePlayers) {
-            Player player = Bukkit.getPlayer(uuid);
-            if (player != null) {
-                bossBar.addPlayer(player);
-            }
-        }
-        bossBar.setProgress(1.0);
-        bossBar.setVisible(true);
-
-
-
         setGameState(GameState.COUNTDOWN);
 
         new BukkitRunnable() {
-            int countdown = 10;
+            int countdown = 8;
 
             @Override
             public void run() {
@@ -450,29 +426,13 @@ public class ChaosPillars extends JavaPlugin implements Listener {
                     resetScoreboard();
                     startScoreboard();
                     startTimer();
+                    startItemTask();
+                    startLavaCountdown(timer);
                     for (UUID uuid : activePlayers) {
                         PlayerStats stats = playerStats.computeIfAbsent(uuid, k -> new PlayerStats());
                         stats.addGamePlayed();
                     }
-
-                    itemTask = new BukkitRunnable() {
-                        final Random rand = new Random();
-                        @Override
-                        public void run() {
-                            for (UUID uuid : activePlayers) {
-                                Player player = Bukkit.getPlayer(uuid);
-                                if (player == null) continue;
-                                Material[] materials = Material.values();
-                                Material mat = materials[rand.nextInt(materials.length)];
-                                try {
-                                    player.getInventory().addItem(new ItemStack(mat));
-                                } catch (Exception ignored) {}
-                            }
-                        }
-                    };
-                    itemTask.runTaskTimer(ChaosPillars.this, itemGiveIntervalTicks, itemGiveIntervalTicks);
                     cancel();
-                    return;
                 }
 
                 for (UUID uuid : activePlayers) {
@@ -488,7 +448,55 @@ public class ChaosPillars extends JavaPlugin implements Listener {
         }.runTaskTimer(this, 0L, 20L);
     }
 
-    public void Randompostiveeffect() {
+    public void startItemTask() {
+        stopItemTask();
+
+        itemTask = new BukkitRunnable() {
+            int secondsLeft = Math.max(1, itemGiveIntervalTicks / 20);
+
+            @Override
+            public void run() {
+                if (secondsLeft <= 0) {
+                    for (UUID uuid : new HashSet<>(activePlayers)) {
+                        Player player = Bukkit.getPlayer(uuid);
+                        if (player == null || !player.isOnline() || player.isDead()) continue;
+
+                        Material[] materials = Material.values();
+                        Material mat = materials[new Random().nextInt(materials.length)];
+                        try {
+                            player.getInventory().addItem(new ItemStack(mat));
+                            player.spigot().sendMessage(
+                                    ChatMessageType.ACTION_BAR,
+                                    new TextComponent(ChatColor.GREEN + "You received an item!")
+                            );
+                        } catch (Exception ignored) {}
+                    }
+                    secondsLeft = Math.max(1, itemGiveIntervalTicks / 20);
+                } else {
+                    for (UUID uuid : new HashSet<>(activePlayers)) {
+                        Player player = Bukkit.getPlayer(uuid);
+                        if (player == null || !player.isOnline()) continue;
+
+                        player.spigot().sendMessage(
+                                ChatMessageType.ACTION_BAR,
+                                new TextComponent(ChatColor.YELLOW + "Next item in " + secondsLeft + "s")
+                        );
+                    }
+                    secondsLeft--;
+                }
+            }
+        };
+
+        itemTask.runTaskTimer(this, 20L, 20L);
+    }
+
+    public void stopItemTask() {
+        if (itemTask != null) {
+            itemTask.cancel();
+            itemTask = null;
+        }
+    }
+    public void RandomPositiveEffect() {
         List<PotionEffectType> effects = List.of(
                 PotionEffectType.SPEED,
                 PotionEffectType.HASTE,
@@ -506,27 +514,34 @@ public class ChaosPillars extends JavaPlugin implements Listener {
                 PotionEffectType.LUCK,
                 PotionEffectType.WATER_BREATHING,
                 PotionEffectType.SLOW_FALLING
-
         );
 
         Random random = new Random();
+
+
+        int powerupCooldown = getConfig().getInt("powerup-cooldown-seconds", 30);
 
         for (UUID uuid : activePlayers) {
             Player player = Bukkit.getPlayer(uuid);
             if (player != null && player.isOnline() && !player.isDead()) {
                 PotionEffectType chosen = effects.get(random.nextInt(effects.size()));
+
+                int duration = 20 * powerupCooldown;
+                int amplifier = 0;
+
                 player.addPotionEffect(new PotionEffect(
-                        chosen, 20 * powerupCooldown, 1, false, true
+                        chosen, duration, amplifier, false, true
                 ));
                 player.sendMessage(ChatColor.AQUA + "✨ You received " + chosen.getName() + "!");
             }
         }
-
     }
+
+
 
     @EventHandler
     public void onCreatureSpawn(CreatureSpawnEvent event) {
-        if (event.getSpawnReason() != CreatureSpawnEvent.SpawnReason.SPAWNER_EGG) {
+        if (event.getSpawnReason() == CreatureSpawnEvent.SpawnReason.NATURAL) {
             event.setCancelled(true);
         }
     }
@@ -608,21 +623,12 @@ public class ChaosPillars extends JavaPlugin implements Listener {
             player.setScoreboard(scoreboard);
         }
 
-        if (bossBar != null) {
-            bossBar.addPlayer(player);
-        }
         if (getGameState() == GameState.RUNNING) {
 
             player.setScoreboard(scoreboard);
         } else {
             updateIdleScoreboard(player);
         }
-    }
-    @EventHandler
-    public void onPlayerLeave(PlayerQuitEvent event) {
-        Player player = event.getPlayer();
-        UUID uuid = player.getUniqueId();
-        activePlayers.remove(uuid);
     }
 
     @EventHandler
@@ -654,10 +660,10 @@ public class ChaosPillars extends JavaPlugin implements Listener {
         Location center = border.getCenter();
         int radius = ((int) border.getSize() / 2) + 2;
 
-        int minX = (int) center.getBlockX() - radius - 1;
-        int maxX = (int) center.getBlockX() + radius + 1;
-        int minZ = (int) center.getBlockZ() - radius - 1;
-        int maxZ = (int) center.getBlockZ() + radius + 1;
+        int minX = center.getBlockX() - radius - 1;
+        int maxX = center.getBlockX() + radius + 1;
+        int minZ = center.getBlockZ() - radius - 1;
+        int maxZ = center.getBlockZ() + radius + 1;
 
 
         int maxY = gameWorld.getMaxHeight();
@@ -798,6 +804,74 @@ public class ChaosPillars extends JavaPlugin implements Listener {
         }.runTaskTimer(this, 0L, 1L);
     }
 
+    public void stopLavaRise() {
+        if (lavaTask != null && !lavaTask.isCancelled()) {
+            lavaTask.cancel();
+        }
+    }
+
+    private BukkitRunnable lavaCountdownTask;
+
+    public void startLavaCountdown(int totalGameTime) {
+        int lavaStartTime = 120;
+        int lavaCountdown = totalGameTime - lavaStartTime;
+
+        if (lavaBossBar == null) {
+            lavaBossBar = Bukkit.createBossBar(
+                    ChatColor.RED + "Lava in " + lavaCountdown + "s",
+                    BarColor.RED,
+                    BarStyle.SOLID
+            );
+            for (UUID uuid : activePlayers) {
+                Player player = Bukkit.getPlayer(uuid);
+                if (player != null) lavaBossBar.addPlayer(player);
+            }
+            lavaBossBar.setVisible(true);
+        }
+
+        lavaCountdownTask = new BukkitRunnable() {
+            int countdown = lavaCountdown;
+
+            @Override
+            public void run() {
+                if (countdown <= 0) {
+                    lavaBossBar.setTitle(ChatColor.RED + "Lava is rising!");
+                    lavaBossBar.setProgress(1.0);
+                    startLavaRise();
+                    cancel();
+                    return;
+                }
+
+                lavaBossBar.setTitle(ChatColor.RED + "Lava in " + countdown + "s");
+                lavaBossBar.setProgress((double) countdown / lavaCountdown);
+
+                countdown--;
+            }
+        };
+        lavaCountdownTask.runTaskTimer(this, 0L, 20L);
+    }
+
+    public void stopLavaCountdown() {
+        if (lavaCountdownTask != null && !lavaCountdownTask.isCancelled()) {
+            lavaCountdownTask.cancel();
+        }
+        if (lavaBossBar != null) {
+            lavaBossBar.removeAll();
+            lavaBossBar = null;
+        }
+    }
+
+
+
+    @EventHandler
+    public void onBlockBreak(BlockBreakEvent event) {
+        Player player = event.getPlayer();
+        if (frozenPlayers.contains(player.getUniqueId())) {
+            event.setCancelled(true);
+            player.sendMessage(ChatColor.RED + "Wait for the countdown to end!");
+        }
+    }
+
     public void startLavaRise() {
         int lavaStartY = -64;
         int lavaEndY = -12;
@@ -815,7 +889,7 @@ public class ChaosPillars extends JavaPlugin implements Listener {
         int minZ = (int) Math.floor(center.getZ() - size / 2);
         int maxZ = (int) Math.ceil(center.getZ() + size / 2);
 
-        new BukkitRunnable() {
+        lavaTask = new BukkitRunnable() {
             int currentY = lavaStartY;
             long ticksPassed = 0;
 
@@ -845,16 +919,6 @@ public class ChaosPillars extends JavaPlugin implements Listener {
                 ticksPassed++;
             }
         }.runTaskTimer(this, 0L, 1L);
-    }
-
-
-    @EventHandler
-    public void onBlockBreak(BlockBreakEvent event) {
-        Player player = event.getPlayer();
-        if (frozenPlayers.contains(player.getUniqueId())) {
-            event.setCancelled(true);
-            player.sendMessage(ChatColor.RED + "Wait for the countdown to end!");
-        }
     }
 
     @EventHandler

@@ -61,6 +61,10 @@ public class ChaosCommand implements CommandExecutor, TabCompleter {
                     player.sendMessage(ChatColor.RED + "You do not have permission to stop the Chaos Pillars game.");
                     return true;
                 }
+                if (plugin.getGameState() == GameState.IDLE) {
+                    player.sendMessage(ChatColor.RED + "There is no game running!");
+                    return true;
+                }
                 plugin.endGame();
                 if (plugin.countdownTask != null) {
                     plugin.countdownTask.cancel();
