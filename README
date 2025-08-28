@@ -1,55 +1,64 @@
-# Chaos Pillars
-Pillars of Chaos is a minigame based of Cubecraft Pillars of Fortune but with more chaos and for java and with configuration
+# ⚡ Chaos Pillars
 
-# Features
-- Spawns 10 players in a circle.
-- Custom pillar types/blocks
-- Custom floor types/blocks
-- Easily configurable
-- Automatically cleans up for next game
-- Custom events for more chaos
-- Custom scoreboard with stats
+**Chaos Pillars** is a chaotic Minecraft minigame inspired by *Cubecraft Pillars of Fortune* — rebuilt for **Paper 1.21.7**, with full configuration support and extra madness.
 
 ---
 
-# Commands
-
-- `/chaos start` - Starts the Chaos Pillars game (requires OP)
-- `/chaos stop` - Stops the current game and resets (requires OP)
-- '/chaos reload' - Reloads config
-- '/choas stats' - Displays stats
----
-
-# Installation
-
-Put the jar in your plugins folder
-have paper 1.21.7
-preferably have a void world called world
+## ✨ Features
+- 🎯 Spawns **10 players** in a circle of chaos
+- 🏗️ Custom **pillar** and **floor** block types
+- ⚙️ Fully **configurable** via `config.yml`
+- 🧹 Auto **cleanup/reset** after each game
+- 🎲 Random **chaos events** (lava, mobs, swaps, etc.)
+- 📊 Built-in **stats & scoreboard system**
 
 ---
 
-# Configuration
-
-Configuration can be found in the plugin file and can be reloaded using /chaos reload.
-
----
-
-# Development
-
-working on a version for more than 10 players
+## ⌨️ Commands
+| Command | Description | Permission |
+|---------|-------------|------------|
+| `/chaos start` | Starts the Chaos Pillars game | OP |
+| `/chaos stop` | Stops/reset the current game | OP |
+| `/chaos reload` | Reloads the config | OP |
+| `/chaos stats` | Shows your stats | Everyone |
 
 ---
 
-# License
-
-read the license file for this
-MIT
+## 📥 Installation
+1. Download the plugin jar
+2. Place it in your server’s `plugins/` folder
+3. Run a **Paper 1.21.7** server
+4. (Optional) Use a **void world** named `world` for best experience
 
 ---
 
-# Contact
+## ⚙️ Configuration
+- Config is generated in the plugin’s folder
+- Reload changes instantly with `/chaos reload`
 
-Send me a message on dc BoesBoes102
+You can customize:
+- ✅ Pillar block types
+- ✅ Floor block types
+- ✅ Event timing and randomness
+- ✅ Scoreboard settings
+
 ---
 
+## 🛠️ Development
+- Currently supports **10 players**
+- Expanding for **more player support** in upcoming versions
 
+---
+
+## 📜 License
+Licensed under the **MIT License**.
+See the [LICENSE](./LICENSE) file for details.
+
+---
+
+## 📬 Contact
+💬 Discord: **BoesBoes102**
+
+---
+
+🔥 Get ready to climb, fight, and survive the **Pillars of Chaos**!
