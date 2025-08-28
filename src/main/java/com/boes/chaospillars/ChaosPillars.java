@@ -204,6 +204,9 @@ public class ChaosPillars extends JavaPlugin implements Listener {
         }
     }
 
+    private String translate(String message){
+        return ChatColor.translateAlternateColorCodes('&', message);
+    }
     private void startScoreboard() {
         ScoreboardManager manager = Bukkit.getScoreboardManager();
         scoreboard = manager.getNewScoreboard();
@@ -240,16 +243,16 @@ public class ChaosPillars extends JavaPlugin implements Listener {
         for (String entry : scoreboard.getEntries()) {
             scoreboard.resetScores(entry);
         }
-        idleObjective.getScore("§6Chaos Pillars").setScore(score--);
-        idleObjective.getScore("§7─────────────── ").setScore(score--);
-        idleObjective.getScore("§ePlayer: §f" + player.getName()).setScore(score--);
-        idleObjective.getScore("§7Kills: §f" + stats.getKills()).setScore(score--);
-        idleObjective.getScore("§7Deaths: §f" + stats.getDeaths()).setScore(score--);
-        idleObjective.getScore("§7Wins: §f" + stats.getWins()).setScore(score--);
-        idleObjective.getScore("§7Games Played: §f" + stats.getGamesPlayed()).setScore(score--);
-        idleObjective.getScore("§7Win Streak: §f" + stats.getWinStreak()).setScore(score--);
-        idleObjective.getScore("§7Loss Streak: §f" + stats.getLossStreak()).setScore(score--);
-        idleObjective.getScore("§7───────────────").setScore(score--);
+        idleObjective.getScore(translate("&6Chaos Pillars")).setScore(score--);
+        idleObjective.getScore(translate("§7─────────────── ")).setScore(score--);
+        idleObjective.getScore(translate("§ePlayer: §f" + player.getName())).setScore(score--);
+        idleObjective.getScore(translate("§7Kills: §f" + stats.getKills())).setScore(score--);
+        idleObjective.getScore(translate("§7Deaths: §f" + stats.getDeaths())).setScore(score--);
+        idleObjective.getScore(translate("§7Wins: §f" + stats.getWins())).setScore(score--);
+        idleObjective.getScore(translate("§7Games Played: §f" + stats.getGamesPlayed())).setScore(score--);
+        idleObjective.getScore(translate("§7Win Streak: §f" + stats.getWinStreak())).setScore(score--);
+        idleObjective.getScore(translate("§7Loss Streak: §f" + stats.getLossStreak())).setScore(score--);
+        idleObjective.getScore(translate("§7───────────────")).setScore(score--);
 
         player.setScoreboard(idleBoard);
     }
@@ -263,13 +266,13 @@ public class ChaosPillars extends JavaPlugin implements Listener {
             scoreboard.resetScores(entry);
         }
 
-        objective.getScore("§6Chaos Pillars").setScore(score--);
-        objective.getScore("§7───────────────").setScore(score--);
-        objective.getScore("§cTime Left: §f" + timer + "s").setScore(score--);
-        objective.getScore("§aPlayers Alive: §f" + activePlayers.size()).setScore(score--);
-        objective.getScore("§bPowerup In: §f" + powerupCooldown + "s").setScore(score--);
-        objective.getScore("§dEvent In: §f" + eventCooldown + "s").setScore(score--);
-        objective.getScore("§7─────────────── ").setScore(score--);
+        objective.getScore(translate("§6Chaos Pillars")).setScore(score--);
+        objective.getScore(translate("§7───────────────")).setScore(score--);
+        objective.getScore(translate("§cTime Left: §f" + timer + "s")).setScore(score--);
+        objective.getScore(translate("§aPlayers Alive: §f" + activePlayers.size())).setScore(score--);
+        objective.getScore(translate("§bPowerup In: §f" + powerupCooldown + "s")).setScore(score--);
+        objective.getScore(translate("§dEvent In: §f" + eventCooldown + "s")).setScore(score--);
+        objective.getScore(translate("§7─────────────── ")).setScore(score--);
 
         for (Player player : Bukkit.getOnlinePlayers()) {
             player.setScoreboard(scoreboard);
