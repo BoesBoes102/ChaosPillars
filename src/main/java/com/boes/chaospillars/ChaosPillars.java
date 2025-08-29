@@ -356,7 +356,7 @@ public class ChaosPillars extends JavaPlugin implements Listener {
         killAllMobs();
         Bukkit.getScheduler().runTaskLater(this, () -> setGameState(GameState.IDLE), 80L);
 
-        resetScoreboard();
+
         for (Player player : Bukkit.getOnlinePlayers()) {
             updateIdleScoreboard(player);
         }
@@ -450,6 +450,15 @@ public class ChaosPillars extends JavaPlugin implements Listener {
             }
         }.runTaskTimer(this, 0L, 20L);
     }
+    private final List<Material> validItems = Arrays.stream(Material.values())
+            .filter(mat -> mat.isItem()
+                    && mat != Material.AIR
+                    && mat != Material.CAVE_AIR
+                    && mat != Material.VOID_AIR)
+            .collect(Collectors.toList());
+
+
+    private final Random random = new Random();
 
     public void startItemTask() {
         stopItemTask();
@@ -464,15 +473,13 @@ public class ChaosPillars extends JavaPlugin implements Listener {
                         Player player = Bukkit.getPlayer(uuid);
                         if (player == null || !player.isOnline() || player.isDead()) continue;
 
-                        Material[] materials = Material.values();
-                        Material mat = materials[new Random().nextInt(materials.length)];
-                        try {
-                            player.getInventory().addItem(new ItemStack(mat));
-                            player.spigot().sendMessage(
-                                    ChatMessageType.ACTION_BAR,
-                                    new TextComponent(ChatColor.GREEN + "You received an item!")
-                            );
-                        } catch (Exception ignored) {}
+                        Material mat = validItems.get(random.nextInt(validItems.size()));
+                        player.getInventory().addItem(new ItemStack(mat));
+
+                        player.spigot().sendMessage(
+                                ChatMessageType.ACTION_BAR,
+                                new TextComponent(ChatColor.GREEN + "You received an item!")
+                        );
                     }
                     secondsLeft = Math.max(1, itemGiveIntervalTicks / 20);
                 } else {
@@ -492,6 +499,7 @@ public class ChaosPillars extends JavaPlugin implements Listener {
 
         itemTask.runTaskTimer(this, 20L, 20L);
     }
+
 
     public void stopItemTask() {
         if (itemTask != null) {
@@ -521,15 +529,12 @@ public class ChaosPillars extends JavaPlugin implements Listener {
 
         Random random = new Random();
 
-
-        int powerupCooldown = getConfig().getInt("powerup-cooldown-seconds", 30);
-
         for (UUID uuid : activePlayers) {
             Player player = Bukkit.getPlayer(uuid);
             if (player != null && player.isOnline() && !player.isDead()) {
                 PotionEffectType chosen = effects.get(random.nextInt(effects.size()));
 
-                int duration = 20 * powerupCooldown;
+                int duration = 20 * 20;
                 int amplifier = 0;
 
                 player.addPotionEffect(new PotionEffect(
@@ -619,20 +624,19 @@ public class ChaosPillars extends JavaPlugin implements Listener {
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
-        player.setGameMode(GameMode.SPECTATOR);
 
-        player.sendMessage(ChatColor.LIGHT_PURPLE + "Do /chas start to start a game!");
-        if (scoreboard != null && objective != null) {
-            player.setScoreboard(scoreboard);
-        }
+        Bukkit.getScheduler().runTask(this, () -> {
+            player.setGameMode(GameMode.SPECTATOR);
+            player.sendMessage(ChatColor.LIGHT_PURPLE + "Do /chaos start to start a game!");
 
-        if (getGameState() == GameState.RUNNING) {
-
-            player.setScoreboard(scoreboard);
-        } else {
-            updateIdleScoreboard(player);
-        }
+            if (getGameState() == GameState.RUNNING) {
+                player.setScoreboard(scoreboard);
+            } else {
+                updateIdleScoreboard(player);
+            }
+        });
     }
+
 
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
