@@ -1,5 +1,4 @@
 game:
-  world-name: "world"
   timer-seconds: 300
   powerup-cooldown-seconds: 30
   event-cooldown-seconds: 20
@@ -29,29 +28,29 @@ game:
     - AMETHYST_BLOCK
   floor-block-types:
     - END_STONE
+    - STONE
     - SLIME_BLOCK
     - AIR
     - HONEY_BLOCK
+    - WHITE_WOOL
+    - GLASS
+    - GLASS_PANE
+    - MOSS_BLOCK
     - GRASS_BLOCK
     - OAK_LOG
     - NETHERRACK
     - BEDROCK
-    - DIAMOND_BLOCK
     - COBWEB
     - CRAFTING_TABLE
     - SOUL_SAND
+    - OAK_TRAPDOOR
     - MAGMA_BLOCK
     - ICE
-    - PACKED_ICE
+    - TNT
+    - BLACK_CARPET
     - BLUE_ICE
-    - DRIPSTONE_BLOCK
+    - POINTED_DRIPSTONE
     - SCAFFOLDING
     - LAVA
     - WATER
-    - GLOWSTONE
-    - SEA_LANTERN
-    - TERRACOTTA
-    - SHROOMLIGHT
-    - WARPED_NYLIUM
-    - CRYING_OBSIDIAN
 

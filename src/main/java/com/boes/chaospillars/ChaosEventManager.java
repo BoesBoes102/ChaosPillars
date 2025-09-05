@@ -9,10 +9,12 @@ import org.bukkit.util.Vector;
 
 import java.util.*;
 
+
 public class ChaosEventManager {
 
     private final ChaosPillars plugin;
     private final Random random = new Random();
+    private World gameWorld;
 
     public ChaosEventManager(ChaosPillars plugin) {
         this.plugin = plugin;
@@ -82,13 +84,14 @@ public class ChaosEventManager {
     }
 
     public void changeWeather() {
-        World world = Bukkit.getWorlds().getFirst();
-        world.setStorm(!world.hasStorm());
+        if (gameWorld == null) return;
+        gameWorld.setStorm(!gameWorld.hasStorm());
     }
 
+
     public void randomTimeChange() {
-        World world = Bukkit.getWorlds().getFirst();
-        world.setTime(random.nextInt(24000));
+        if (gameWorld == null) return;
+        gameWorld.setTime(random.nextInt(24000));
     }
 
     public void swapPositions() {
@@ -137,7 +140,7 @@ public class ChaosEventManager {
 
     public void applyGlow() {
         for (Player player : getActivePlayers()) {
-            player.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, 20 * 10, 0, false, false, true));
+            player.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, 20 * 20, 0, false, false, true));
         }
     }
 
@@ -149,7 +152,7 @@ public class ChaosEventManager {
     }
 
     public void randomNegativeEffect() {
-        int duration = 20 * 3;
+        int duration = 20 * 20;
         int amplifier = 1;
 
         PotionEffectType[] negativeEffectTypes = {
@@ -159,9 +162,7 @@ public class ChaosEventManager {
                 PotionEffectType.POISON,
                 PotionEffectType.SLOWNESS,
                 PotionEffectType.MINING_FATIGUE,
-                PotionEffectType.UNLUCK,
                 PotionEffectType.WEAKNESS,
-                PotionEffectType.WITHER,
                 PotionEffectType.LEVITATION
         };
 

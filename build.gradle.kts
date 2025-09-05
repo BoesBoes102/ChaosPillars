@@ -3,10 +3,11 @@ plugins {
 }
 
 group = "com.boes.chaospillars"
-version = "1.6"
+version = "1.7.2"
 
 repositories {
     mavenCentral()
+    mavenLocal()
     maven("https://repo.papermc.io/repository/maven-public/")
 }
 
