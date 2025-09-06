@@ -1,26 +1,14 @@
 package com.boes.chaospillars;
 
-import com.boes.chaospillars.listeners.WorldListener;
-import com.boes.chaospillars.tasks.GameGenerateTask;
-import com.boes.chaospillars.tasks.ClearAreaTask;
-import com.boes.chaospillars.tasks.KillAllEntitiesTask;
-import com.boes.chaospillars.tasks.RandomPositiveEffectTask;
-import com.boes.chaospillars.tasks.SetupTask;
+import com.boes.chaospillars.listeners.*;
+import com.boes.chaospillars.tasks.*;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import com.boes.chaospillars.enums.GameState;
 import org.bukkit.entity.*;
-import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.block.BlockBreakEvent;
-import org.bukkit.event.block.BlockPlaceEvent;
-import org.bukkit.event.entity.CreatureSpawnEvent;
-import org.bukkit.event.entity.EntityDamageByEntityEvent;
-import org.bukkit.event.entity.PlayerDeathEvent;
-import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
@@ -29,9 +17,6 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.boss.BossBar;
 import org.bukkit.boss.BarColor;
 import org.bukkit.boss.BarStyle;
-import org.bukkit.event.player.PlayerMoveEvent;
-import org.bukkit.util.Vector;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -43,6 +28,7 @@ public class ChaosPillars extends JavaPlugin implements Listener {
     public Map<UUID, PlayerStats> playerStats = new HashMap<>();
     private final Map<UUID, UUID> lastDamager = new HashMap<>();
     public final Set<UUID> activePlayers = new HashSet<>();
+    private final Set<UUID> quitters = new HashSet<>();
     private BukkitRunnable gameTask;
     private BukkitRunnable itemTask;
     public BukkitRunnable countdownTask;
@@ -67,6 +53,7 @@ public class ChaosPillars extends JavaPlugin implements Listener {
     public GameState getGameState() {
         return gameState;
     }
+
     public void setGameState(GameState state) {
         this.gameState = state;
     }
@@ -78,7 +65,6 @@ public class ChaosPillars extends JavaPlugin implements Listener {
         resetScoreboard();
         startScoreboard();
 
-        // Setup world
         SetupTask setupTask = new SetupTask(this);
         gameWorld = setupTask.setupWorld();
 
@@ -97,10 +83,16 @@ public class ChaosPillars extends JavaPlugin implements Listener {
         Objects.requireNonNull(getCommand("chaos")).setExecutor(new ChaosCommand(this));
         Objects.requireNonNull(getCommand("chaos")).setTabCompleter(new ChaosCommand(this));
 
+        Bukkit.getPluginManager().registerEvents(new WorldListener(gameWorld), this);
+        Bukkit.getPluginManager().registerEvents(new NoMobsListener(gameWorld), this);
+        Bukkit.getPluginManager().registerEvents(new HeightLimitListener(gameWorld), this);
+        Bukkit.getPluginManager().registerEvents(new JoinListener(this, gameWorld), this);
+        Bukkit.getPluginManager().registerEvents(new DamageListener(lastDamager, gameWorld), this);
+        Bukkit.getPluginManager().registerEvents(new FrozenListener(frozenPlayers, gameWorld), this);
+        Bukkit.getPluginManager().registerEvents(new LeaveListener(activePlayers, quitters, gameWorld), this);
+        Bukkit.getPluginManager().registerEvents(new DeathListener(playerStats, lastDamager, activePlayers, quitters, this::endGame, gameWorld), this);
 
 
-        Bukkit.getPluginManager().registerEvents(this, this);
-        Bukkit.getPluginManager().registerEvents(new WorldListener(), this);
 
         new ClearAreaTask(gameWorld).runTaskTimer(this, 0L, 1L);
 
@@ -116,21 +108,21 @@ public class ChaosPillars extends JavaPlugin implements Listener {
 
     @Override
     public void onDisable() {
-        stopGameTasks();
+        new ResetGameTask(gameWorld, gameTask, itemTask, countdownTask).reset();
         resetScoreboard();
         statsManager.saveStats(playerStats);
     }
 
 
     public void reloadGameConfig() {
-        String worldName = getConfig().getString("game.world-name", "world");
-        gameWorld = Bukkit.getWorld(worldName);
 
-        timer = getConfig().getInt("game.timer-seconds", 600);
+        timer = getConfig().getInt("game.timer-seconds", 300);
 
         powerupCooldown = getConfig().getInt("game.powerup-cooldown-seconds", 30);
 
-        itemGiveIntervalTicks = getConfig().getInt("game.item-give-interval-seconds", 4) * 20;
+        itemGiveIntervalTicks = getConfig().getInt("game.item-give-interval-seconds", 3) * 20;
+
+        eventCooldown = getConfig().getInt("game.event-cooldown-seconds", 20);
 
         List<String> floorStrings = getConfig().getStringList("floor-block-types");
         List<Material> parsedFloorMaterials = floorStrings.stream()
@@ -158,7 +150,7 @@ public class ChaosPillars extends JavaPlugin implements Listener {
                     Material.WHITE_WOOL,
                     Material.GLASS,
                     Material.GLASS_PANE,
-                    Material.OAK_LOG,
+                    Material.MOSS_BLOCK,
                     Material.CHERRY_LEAVES,
                     Material.NETHERRACK,
                     Material.BEDROCK,
@@ -168,12 +160,13 @@ public class ChaosPillars extends JavaPlugin implements Listener {
                     Material.SOUL_SAND,
                     Material.OAK_TRAPDOOR,
                     Material.MAGMA_BLOCK,
-                    Material.ICE,
                     Material.TNT,
                     Material.BLACK_CARPET,
                     Material.BLUE_ICE,
                     Material.POINTED_DRIPSTONE,
-                    Material.SCAFFOLDING
+                    Material.SCAFFOLDING,
+                    Material.LAVA,
+                    Material.WATER
             );
         }
 
@@ -195,7 +188,24 @@ public class ChaosPillars extends JavaPlugin implements Listener {
         } else {
             getLogger().warning("No valid pillar block types in config. Using default.");
             pillarBlockTypes = Arrays.asList(
-                    Material.BEDROCK, Material.SAND, Material.NETHERRACK, Material.END_STONE
+                    Material.BEDROCK,
+                    Material.SAND,
+                    Material.NETHERRACK,
+                    Material.END_STONE,
+                    Material.CHERRY_LOG,
+                    Material.CRAFTING_TABLE,
+                    Material.CHERRY_LEAVES,
+                    Material.COBBLESTONE,
+                    Material.OBSIDIAN,
+                    Material.REDSTONE_BLOCK,
+                    Material.TNT,
+                    Material.NOTE_BLOCK,
+                    Material.SEA_LANTERN,
+                    Material.MELON,
+                    Material.PUMPKIN,
+                    Material.AMETHYST_BLOCK,
+                    Material.GLASS,
+                    Material.GLASS_PANE
             );
         }
         getLogger().info("Loaded floor blocks: " + floorBlockTypes);
@@ -203,16 +213,7 @@ public class ChaosPillars extends JavaPlugin implements Listener {
     }
 
 
-    private void stopGameTasks() {
-        if (gameTask != null) gameTask.cancel();
-        if (itemTask != null) itemTask.cancel();
-        if (countdownTask != null) countdownTask.cancel();
-        gameTask = null;
-        itemTask = null;
-        countdownTask = null;
-    }
-
-    private String translate(String message){
+    private String translate(String message) {
         return ChatColor.translateAlternateColorCodes('&', message);
     }
 
@@ -241,7 +242,7 @@ public class ChaosPillars extends JavaPlugin implements Listener {
         }
     }
 
-    private void updateIdleScoreboard(Player player) {
+    public void updateIdleScoreboard(Player player) {
         Scoreboard idleBoard = Bukkit.getScoreboardManager().getNewScoreboard();
         Objective idleObjective = idleBoard.registerNewObjective("idle", "dummy", ChatColor.GOLD + "Your Stats");
         idleObjective.setDisplaySlot(DisplaySlot.SIDEBAR);
@@ -267,7 +268,7 @@ public class ChaosPillars extends JavaPlugin implements Listener {
     }
 
 
-    private void updateGameScoreboard() {
+    public void updateGameScoreboard() {
         if (objective == null) return;
 
         int score = 6;
@@ -304,10 +305,11 @@ public class ChaosPillars extends JavaPlugin implements Listener {
         scoreboard = null;
         objective = null;
     }
+
     private void startTimer() {
-        timer = getConfig().getInt("game.timer-seconds", 600);
+        timer = getConfig().getInt("game.timer-seconds", 300);
         powerupCooldown = getConfig().getInt("game.powerup-cooldown-seconds", 30);
-        eventCooldown = getConfig().getInt("game.event-cooldown-seconds", 120);
+        eventCooldown = getConfig().getInt("game.event-cooldown-seconds", 20);
 
 
         gameTask = new BukkitRunnable() {
@@ -323,8 +325,6 @@ public class ChaosPillars extends JavaPlugin implements Listener {
                 if (powerupCooldown <= 0) {
                     new RandomPositiveEffectTask(ChaosPillars.this, activePlayers)
                             .runTask(ChaosPillars.this);
-
-                    powerupCooldown = getConfig().getInt("game.powerup-cooldown-seconds", 30);
                 }
 
 
@@ -332,9 +332,6 @@ public class ChaosPillars extends JavaPlugin implements Listener {
 
                     ChaosEventManager eventManager = new ChaosEventManager(ChaosPillars.this);
                     eventManager.triggerRandomEvent();
-
-                    eventCooldown = getConfig().getInt("game.event-cooldown-seconds", 120);
-
                 }
 
                 if (timer <= 0) {
@@ -348,45 +345,31 @@ public class ChaosPillars extends JavaPlugin implements Listener {
     }
 
 
-
     public void endGame() {
         stopLavaRise();
         stopLavaCountdown();
-        stopGameTasks();
-        gameWorld.setTime(1000);
-        gameWorld.setStorm(false);
+        new ResetGameTask(gameWorld, gameTask, itemTask, countdownTask).reset();
         Location spawn = gameWorld.getSpawnLocation();
         for (Player player : Bukkit.getOnlinePlayers()) {
             player.teleport(spawn);
             player.setGameMode(GameMode.SPECTATOR);
             player.getInventory().clear();
+            updateIdleScoreboard(player);
         }
         new ClearAreaTask(gameWorld).runTaskTimer(this, 0L, 1L);
         activePlayers.clear();
+        lastDamager.clear();
+        quitters.clear();
         new KillAllEntitiesTask(gameWorld).run();
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            updateIdleScoreboard(player);
-        }
         setGameState(GameState.IDLE);
     }
 
     public void startGame() {
         activePlayers.clear();
+        new ResetGameTask(gameWorld, gameTask, itemTask, countdownTask).reset();
         new KillAllEntitiesTask(gameWorld).run();
 
-        // Create a generator instance
         GameGenerateTask generator = new GameGenerateTask(gameWorld, floorBlockTypes, pillarBlockTypes);
-
-        // Schedule floor generation after 40 ticks
-        Bukkit.getScheduler().runTaskLater(this, generator::generateRandomFloor, 40L);
-
-        gameWorld.setTime(1000);
-        gameWorld.setStorm(false);
-
-        Random random = new Random();
-        Material currentRoundPillarMaterial = pillarBlockTypes.get(random.nextInt(pillarBlockTypes.size()));
-        Bukkit.broadcastMessage(ChatColor.LIGHT_PURPLE + "This round's pillars are made of " +
-                ChatColor.YELLOW + currentRoundPillarMaterial.name().toLowerCase().replace('_', ' ') + "!");
 
         int radius = 12;
         int height = 50;
@@ -396,13 +379,13 @@ public class ChaosPillars extends JavaPlugin implements Listener {
         List<Player> players = new ArrayList<>(Bukkit.getOnlinePlayers());
         Collections.shuffle(players);
 
-        // Schedule pillar generation + player teleport after 40 ticks
         Bukkit.getScheduler().runTaskLater(this, () -> {
-            List<Location> basePillarLocations = generator.generatePillars(currentRoundPillarMaterial, radius, height, baseY, pillarCount);
+            List<Location> basePillarLocations = generator.generateArena(radius, height, baseY, pillarCount);
 
             for (int i = 0; i < players.size() && i < basePillarLocations.size(); i++) {
                 Location baseLoc = basePillarLocations.get(i);
                 Player player = players.get(i);
+
                 Location tp = baseLoc.clone().add(0.5, height, 0.5);
                 player.teleport(tp);
                 player.setGameMode(GameMode.SURVIVAL);
@@ -410,13 +393,14 @@ public class ChaosPillars extends JavaPlugin implements Listener {
                 player.setFoodLevel(20);
                 player.clearActivePotionEffects();
                 player.getInventory().clear();
+
                 activePlayers.add(player.getUniqueId());
             }
+
             frozenPlayers.addAll(activePlayers);
         }, 40L);
 
         gameWorld.getWorldBorder().setSize(37);
-
         setGameState(GameState.COUNTDOWN);
 
         new BukkitRunnable() {
@@ -439,11 +423,13 @@ public class ChaosPillars extends JavaPlugin implements Listener {
                     startTimer();
                     startItemTask();
                     startLavaCountdown(timer);
+
                     for (UUID uuid : activePlayers) {
                         PlayerStats stats = playerStats.computeIfAbsent(uuid, k -> new PlayerStats());
                         stats.addGamePlayed();
                     }
                     cancel();
+                    return;
                 }
 
                 for (UUID uuid : activePlayers) {
@@ -454,11 +440,11 @@ public class ChaosPillars extends JavaPlugin implements Listener {
                         player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 1.5f);
                     }
                 }
-
                 countdown--;
             }
         }.runTaskTimer(this, 0L, 20L);
     }
+
     private final List<Material> validItems = Arrays.stream(Material.values())
             .filter(mat -> mat.isItem()
                     && mat != Material.AIR
@@ -517,119 +503,7 @@ public class ChaosPillars extends JavaPlugin implements Listener {
         }
     }
 
-    @EventHandler
-    public void onCreatureSpawn(CreatureSpawnEvent event) {
-        if (event.getSpawnReason() == CreatureSpawnEvent.SpawnReason.NATURAL) {
-            event.setCancelled(true);
-        }
-    }
 
-    @EventHandler
-    public void onPlayerDeath(PlayerDeathEvent event) {
-        Player dead = event.getEntity();
-        UUID deadId = dead.getUniqueId();
-        UUID killerId = null;
-
-        if (dead.getKiller() != null) {
-            killerId = dead.getKiller().getUniqueId();
-        } else if (lastDamager.containsKey(deadId)) {
-            killerId = lastDamager.get(deadId);
-        }
-
-
-        PlayerStats deadStats = playerStats.computeIfAbsent(deadId, k -> new PlayerStats());
-        deadStats.addDeath();
-        deadStats.addLoss();
-        deadStats.setWinStreak(0);
-
-        if (killerId != null && !killerId.equals(deadId)) {
-            OfflinePlayer killer = Bukkit.getOfflinePlayer(killerId);
-            PlayerStats killerStats = playerStats.computeIfAbsent(killerId, k -> new PlayerStats());
-            killerStats.addKill();
-
-            event.setDeathMessage(ChatColor.RED + dead.getName() + ChatColor.GRAY + " was killed by " + ChatColor.YELLOW + killer.getName());
-        } else {
-            event.setDeathMessage(ChatColor.RED + dead.getName() + ChatColor.GRAY + " died.");
-        }
-
-        lastDamager.remove(deadId);
-
-
-        activePlayers.remove(deadId);
-        dead.setGameMode(GameMode.SPECTATOR);
-
-        if (activePlayers.size() == 1) {
-            UUID winnerId = activePlayers.iterator().next();
-            Player winner = Bukkit.getPlayer(winnerId);
-            if (winner != null) {
-                Bukkit.broadcastMessage(ChatColor.GOLD + winner.getName() + " has won the Chaos Pillars game!");
-                PlayerStats winnerStats = playerStats.computeIfAbsent(winnerId, k -> new PlayerStats());
-                winnerStats.addWin();
-                winnerStats.resetLossStreak();
-
-                int newStreak = winnerStats.getWinStreak() + 1;
-                winnerStats.setWinStreak(newStreak);
-
-                if (newStreak > winnerStats.getHighestWinStreak()) {
-                    winnerStats.setHighestWinStreak(newStreak);
-                }
-
-            }
-            endGame();
-        } else if (activePlayers.isEmpty()) {
-            Bukkit.broadcastMessage(ChatColor.GRAY + "Nobody won the Chaos Pillars game.");
-            endGame();
-        }
-    }
-
-
-    @EventHandler
-    public void onEntityDamageByEntity(EntityDamageByEntityEvent event) {
-        if (event.getEntity() instanceof Player damaged && event.getDamager() instanceof Player damager) {
-            lastDamager.put(damaged.getUniqueId(), damager.getUniqueId());
-        }
-    }
-
-
-    @EventHandler
-    public void onPlayerJoin(PlayerJoinEvent event) {
-        Player player = event.getPlayer();
-
-        Bukkit.getScheduler().runTask(this, () -> {
-            player.setGameMode(GameMode.SPECTATOR);
-            player.teleport(gameWorld.getSpawnLocation());
-            player.sendMessage(ChatColor.LIGHT_PURPLE + "Do /chaos start to start a game!");
-
-            if (getGameState() == GameState.RUNNING) {
-                player.setScoreboard(scoreboard);
-            } else {
-                updateIdleScoreboard(player);
-            }
-        });
-    }
-
-
-    @EventHandler
-    public void onPlayerQuit(PlayerQuitEvent event) {
-        Player player = event.getPlayer();
-        UUID uuid = player.getUniqueId();
-
-        if (!activePlayers.contains(uuid)) return;
-
-        activePlayers.remove(uuid);
-
-        if (activePlayers.size() == 1) {
-            UUID winnerId = activePlayers.iterator().next();
-            Player winner = Bukkit.getPlayer(winnerId);
-            if (winner != null) {
-                Bukkit.broadcastMessage(ChatColor.GOLD + winner.getName() + " has won the Chaos Pillars game!");
-            }
-            endGame();
-        } else if (activePlayers.isEmpty()) {
-            Bukkit.broadcastMessage(ChatColor.GRAY + "Nobody won the Chaos Pillars game.");
-            endGame();
-        }
-    }
 
     public void stopLavaRise() {
         if (lavaTask != null && !lavaTask.isCancelled()) {
@@ -689,16 +563,6 @@ public class ChaosPillars extends JavaPlugin implements Listener {
     }
 
 
-
-    @EventHandler
-    public void onBlockBreak(BlockBreakEvent event) {
-        Player player = event.getPlayer();
-        if (frozenPlayers.contains(player.getUniqueId())) {
-            event.setCancelled(true);
-            player.sendMessage(ChatColor.RED + "Wait for the countdown to end!");
-        }
-    }
-
     public void startLavaRise() {
         int lavaStartY = -64;
         int lavaEndY = -12;
@@ -748,38 +612,4 @@ public class ChaosPillars extends JavaPlugin implements Listener {
         }.runTaskTimer(this, 0L, 1L);
     }
 
-    @EventHandler
-    public void onProjectileHit(EntityDamageByEntityEvent event) {
-        if (!(event.getEntity() instanceof Player victim)) return;
-
-        Entity damager = event.getDamager();
-
-        if (damager instanceof Snowball || damager instanceof Egg) {
-            Projectile projectile = (Projectile) damager;
-            if (!(projectile.getShooter() instanceof Player shooter)) return;
-
-            org.bukkit.util.@NotNull Vector direction = victim.getLocation().toVector().subtract(shooter.getLocation().toVector()).normalize();
-            @NotNull Vector knockback = direction.multiply(0.8).setY(0.5);
-
-            victim.setVelocity(knockback);
-        }
-    }
-
-    @EventHandler
-    public void onPlayerMove(PlayerMoveEvent event) {
-        Player player = event.getPlayer();
-        if (frozenPlayers.contains(player.getUniqueId())) {
-            if (!event.getFrom().toVector().equals(event.getTo().toVector())) {
-                event.setTo(event.getFrom());
-            }
-        }
-    }
-    @EventHandler
-    public void onBlockPlace(BlockPlaceEvent event) {
-        Block block = event.getBlock();
-        if (block.getY() >=2 ) {
-            event.setCancelled(true);
-            event.getPlayer().sendMessage(ChatColor.RED + "HEIGHT LIMIT!");
-        }
-    }
 }

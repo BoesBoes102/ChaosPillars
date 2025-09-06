@@ -8,24 +8,20 @@ game:
     - SAND
     - NETHERRACK
     - END_STONE
-    - OAK_LOG
+    - CHERRY_LOG
     - CRAFTING_TABLE
-    - IRON_BLOCK
-    - OAK_LEAVES
+    - CHERRY_LEAVES
     - COBBLESTONE
     - OBSIDIAN
-    - GOLD_BLOCK
     - REDSTONE_BLOCK
-    - EMERALD_BLOCK
     - TNT
     - NOTE_BLOCK
-    - MOSSY_COBBLESTONE
-    - PRISMARINE
-    - HAY_BLOCK
+    - SEA_LANTERN
     - MELON
     - PUMPKIN
-    - MANGROVE_LOG
     - AMETHYST_BLOCK
+    - GLASS
+    - GLASS_PANE
   floor-block-types:
     - END_STONE
     - STONE
@@ -36,16 +32,15 @@ game:
     - GLASS
     - GLASS_PANE
     - MOSS_BLOCK
-    - GRASS_BLOCK
-    - OAK_LOG
+    - CHERRY_LEAVES
     - NETHERRACK
     - BEDROCK
+    - DIAMOND_BLOCK
     - COBWEB
     - CRAFTING_TABLE
     - SOUL_SAND
     - OAK_TRAPDOOR
     - MAGMA_BLOCK
-    - ICE
     - TNT
     - BLACK_CARPET
     - BLUE_ICE
