@@ -9,17 +9,12 @@ import org.bukkit.WorldType;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.generator.ChunkGenerator;
 import org.bukkit.World.Environment;
+import org.jetbrains.annotations.NotNull;
 
 
 import java.util.Random;
 
-public class SetupTask {
-
-    private final JavaPlugin plugin;
-
-    public SetupTask(JavaPlugin plugin) {
-        this.plugin = plugin;
-    }
+public record SetupTask(JavaPlugin plugin) {
 
     public World setupWorld() {
         String worldName = "Chaospillars";
@@ -28,9 +23,18 @@ public class SetupTask {
         if (gameWorld == null) {
             plugin.getLogger().info("World '" + worldName + "' not found. Creating a fully empty void world...");
 
-            WorldCreator creator = WorldCreator.name(worldName);
-            creator.generator(new VoidGenerator());
+            WorldCreator creator = new WorldCreator(worldName);
+            creator.environment(Environment.NORMAL);
+            creator.type(WorldType.FLAT);
+            creator.generateStructures(false);
+            creator.generator(new ChunkGenerator() {
+                @Override
+                public @NotNull ChunkData generateChunkData(@NotNull World world, @NotNull Random random, int chunkX, int chunkZ, @NotNull BiomeGrid biome) {
+                    return createChunkData(world); // empty chunk
+                }
+            });
             gameWorld = creator.createWorld();
+
 
             if (gameWorld == null) {
                 plugin.getLogger().severe("Failed to create ChaosPillars void world!");
@@ -67,13 +71,6 @@ public class SetupTask {
         if (world != null) {
             Bukkit.unloadWorld(world, false);
             plugin.getLogger().info("World '" + worldName + "' has been disabled.");
-        }
-    }
-
-    public static class VoidGenerator extends ChunkGenerator {
-        @Override
-        public ChunkData generateChunkData(World world, Random random, int chunkX, int chunkZ, org.bukkit.generator.ChunkGenerator.BiomeGrid biome) {
-            return createChunkData(world);
         }
     }
 }

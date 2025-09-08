@@ -1,6 +1,6 @@
 package com.boes.chaospillars.listeners;
 
-import com.boes.chaospillars.PlayerStats;
+import com.boes.chaospillars.stats.PlayerStats;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
@@ -51,7 +51,6 @@ public record DeathListener(
             OfflinePlayer killer = Bukkit.getOfflinePlayer(killerId);
             PlayerStats killerStats = playerStats.computeIfAbsent(killerId, k -> new PlayerStats());
             killerStats.addKill();
-
             event.setDeathMessage(ChatColor.RED + dead.getName() + ChatColor.GRAY + " was killed by " + ChatColor.YELLOW + killer.getName());
         } else {
             event.setDeathMessage(ChatColor.RED + dead.getName() + ChatColor.GRAY + " died.");
@@ -69,10 +68,8 @@ public record DeathListener(
                 PlayerStats winnerStats = playerStats.computeIfAbsent(winnerId, k -> new PlayerStats());
                 winnerStats.addWin();
                 winnerStats.resetLossStreak();
-
                 int newStreak = winnerStats.getWinStreak() + 1;
                 winnerStats.setWinStreak(newStreak);
-
                 if (newStreak > winnerStats.getHighestWinStreak()) {
                     winnerStats.setHighestWinStreak(newStreak);
                 }

@@ -4,12 +4,7 @@ import org.bukkit.World;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 
-public class KillAllEntitiesTask {
-    private final World gameWorld;
-
-    public KillAllEntitiesTask(World gameWorld) {
-        this.gameWorld = gameWorld;
-    }
+public record KillAllEntitiesTask(World gameWorld) {
 
     public void run() {
         if (gameWorld == null) return;

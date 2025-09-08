@@ -8,9 +8,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 
 public class ClearAreaTask extends BukkitRunnable {
     private final World gameWorld;
-    private final int minX;
     private final int maxX;
-    private final int minY = -64;
     private final int maxY;
     private final int minZ;
     private final int maxZ;
@@ -28,7 +26,7 @@ public class ClearAreaTask extends BukkitRunnable {
         int centerX = world.getWorldBorder().getCenter().getBlockX();
         int centerZ = world.getWorldBorder().getCenter().getBlockZ();
 
-        this.minX = centerX - radius;
+        int minX = centerX - radius;
         this.maxX = centerX + radius;
         this.minZ = centerZ - radius;
         this.maxZ = centerZ + radius;
@@ -48,6 +46,7 @@ public class ClearAreaTask extends BukkitRunnable {
         while (changed < batchSize) {
             Block block = gameWorld.getBlockAt(x, y, z);
 
+            int minY = -64;
             if (y == minY) {
                 if (block.getType() != Material.BEDROCK) {
                     block.setType(Material.BEDROCK, false);

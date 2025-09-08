@@ -1,5 +1,6 @@
-package com.boes.chaospillars;
+package com.boes.chaospillars.tasks;
 
+import com.boes.chaospillars.ChaosPillars;
 import org.bukkit.*;
 import org.bukkit.entity.*;
 import org.bukkit.inventory.ItemStack;
@@ -10,14 +11,15 @@ import org.bukkit.util.Vector;
 import java.util.*;
 
 
-public class ChaosEventManager {
+public class ChaosEventTask {
 
     private final ChaosPillars plugin;
     private final Random random = new Random();
-    private World gameWorld;
+    private final World gameWorld;
 
-    public ChaosEventManager(ChaosPillars plugin) {
+    public ChaosEventTask(ChaosPillars plugin, World gameWorld) {
         this.plugin = plugin;
+        this.gameWorld = gameWorld;
     }
 
     private List<Player> getActivePlayers() {

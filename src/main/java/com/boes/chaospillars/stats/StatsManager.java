@@ -1,5 +1,6 @@
-package com.boes.chaospillars;
+package com.boes.chaospillars.stats;
 
+import com.boes.chaospillars.ChaosPillars;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 

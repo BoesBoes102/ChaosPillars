@@ -1,4 +1,4 @@
-package com.boes.chaospillars;
+package com.boes.chaospillars.stats;
 
 public class PlayerStats {
     private int wins;

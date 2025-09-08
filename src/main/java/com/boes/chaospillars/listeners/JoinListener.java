@@ -23,9 +23,9 @@ public record JoinListener(ChaosPillars plugin, World gameWorld) implements List
             player.sendMessage(ChatColor.LIGHT_PURPLE + "Do /chaos start to start a game!");
 
             if (plugin.getGameState() == GameState.RUNNING) {
-                plugin.updateGameScoreboard();
+                plugin.getScoreboardManager().updateGameScoreboard();
             } else {
-                plugin.updateIdleScoreboard(player);
+                plugin.getScoreboardManager().updateIdleScoreboard(player);
             }
         });
     }

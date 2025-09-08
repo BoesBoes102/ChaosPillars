@@ -14,12 +14,11 @@ public record WorldListener(World gameWorld) implements Listener {
 
         if (!player.getWorld().equals(gameWorld)) return;
 
-        if (event.getTo() != null) {
-            World.Environment env = event.getTo().getWorld().getEnvironment();
-            if (env == World.Environment.NETHER || env == World.Environment.THE_END) {
-                event.setCancelled(true);
-                player.sendMessage("Nether and End are disabled in the game world!");
-            }
+        event.getTo();
+        World.Environment env = event.getTo().getWorld().getEnvironment();
+        if (env == World.Environment.NETHER || env == World.Environment.THE_END) {
+            event.setCancelled(true);
+            player.sendMessage("Nether and End are disabled in the game world!");
         }
     }
 }
