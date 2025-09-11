@@ -99,7 +99,7 @@ public class StartGame {
                     plugin.setGameState(GameState.RUNNING);
                     scoreboardManager.resetScoreboard();
                     scoreboardManager.startScoreboard();
-                    new StartTimer(plugin, activePlayers, quitters, lastDamager, playerStats, itemTask, gameWorld, plugin.getScoreboardManager());
+                    new StartTimer(plugin, activePlayers, quitters, lastDamager, playerStats, itemTask, gameWorld, plugin.getScoreboardManager()).startTimer();
                     new LavaCountdownTask(plugin, gameWorld);
 
                     itemTask = new ItemTask(plugin, activePlayers, itemGiveIntervalTicks);

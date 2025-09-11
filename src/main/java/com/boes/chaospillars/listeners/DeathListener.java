@@ -39,11 +39,13 @@ public record DeathListener(
             killerId = lastDamager.get(deadId);
         }
 
+        // Update stats for dead player
         PlayerStats deadStats = playerStats.computeIfAbsent(deadId, k -> new PlayerStats());
         deadStats.addDeath();
         deadStats.addLoss();
         deadStats.setWinStreak(0);
 
+        // Build death message
         if (quitters.contains(deadId)) {
             event.setDeathMessage(ChatColor.RED + dead.getName() + ChatColor.GRAY + " left the game.");
             quitters.remove(deadId);
@@ -56,28 +58,34 @@ public record DeathListener(
             event.setDeathMessage(ChatColor.RED + dead.getName() + ChatColor.GRAY + " died.");
         }
 
+        // Clean up
         lastDamager.remove(deadId);
         activePlayers.remove(deadId);
         dead.setGameMode(GameMode.SPECTATOR);
 
+        // ✅ Win condition check
         if (activePlayers.size() == 1) {
             UUID winnerId = activePlayers.iterator().next();
-            Player winner = Bukkit.getPlayer(winnerId);
-            if (winner != null) {
-                Bukkit.broadcastMessage(ChatColor.GOLD + winner.getName() + " has won the Chaos Pillars game!");
-                PlayerStats winnerStats = playerStats.computeIfAbsent(winnerId, k -> new PlayerStats());
-                winnerStats.addWin();
-                winnerStats.resetLossStreak();
-                int newStreak = winnerStats.getWinStreak() + 1;
-                winnerStats.setWinStreak(newStreak);
-                if (newStreak > winnerStats.getHighestWinStreak()) {
-                    winnerStats.setHighestWinStreak(newStreak);
-                }
-            }
+            announceWinner(winnerId);
             endGameCallback.run();
         } else if (activePlayers.isEmpty()) {
             Bukkit.broadcastMessage(ChatColor.GRAY + "Nobody won the Chaos Pillars game.");
             endGameCallback.run();
+        }
+    }
+
+    private void announceWinner(UUID winnerId) {
+        Player winner = Bukkit.getPlayer(winnerId);
+        if (winner != null) {
+            Bukkit.broadcastMessage(ChatColor.GOLD + winner.getName() + " has won the Chaos Pillars game!");
+            PlayerStats winnerStats = playerStats.computeIfAbsent(winnerId, k -> new PlayerStats());
+            winnerStats.addWin();
+            winnerStats.resetLossStreak();
+            int newStreak = winnerStats.getWinStreak() + 1;
+            winnerStats.setWinStreak(newStreak);
+            if (newStreak > winnerStats.getHighestWinStreak()) {
+                winnerStats.setHighestWinStreak(newStreak);
+            }
         }
     }
 }

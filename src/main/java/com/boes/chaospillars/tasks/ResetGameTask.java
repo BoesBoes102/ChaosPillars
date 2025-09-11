@@ -28,16 +28,19 @@ public class ResetGameTask {
         if (gameTask != null) {
             gameTask.cancel();
             gameTask = null;
+            plugin.gameTask = null;
         }
 
         if (itemTask != null) {
             itemTask.stop();
             itemTask = null;
+            plugin.itemTask = null;
         }
 
         if (countdownTask != null) {
             countdownTask.cancel();
             countdownTask = null;
+            plugin.countdownTask = null;
         }
 
         if (plugin.getLavaCountdownTask() != null) {
