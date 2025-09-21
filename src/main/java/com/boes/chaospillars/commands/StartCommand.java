@@ -1,8 +1,8 @@
 package com.boes.chaospillars.commands;
 
 import com.boes.chaospillars.ChaosPillars;
-import com.boes.chaospillars.enums.GameState;
 import com.boes.chaospillars.ChaosGame.StartGame;
+import com.boes.chaospillars.enums.GameState;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
@@ -26,26 +26,24 @@ public record StartCommand(ChaosPillars plugin) implements CommandExecutor {
         }
 
         if (plugin.getGameState() != GameState.IDLE) {
-            player.sendMessage(ChatColor.RED + "Chaos game is already running or counting down!");
+            player.sendMessage(ChatColor.RED + "A game is already running!");
             return true;
         }
 
-        int playerCount = Bukkit.getOnlinePlayers().size();
-        if (playerCount < 2) {
-            player.sendMessage(ChatColor.RED + "Not enough players to start Chaos Pillars! Need at least 2.");
-            return true;
-        }
-        if (playerCount > 10) {
-            player.sendMessage(ChatColor.RED + "Chaos Pillars supports a maximum of 10 players!");
+        if (Bukkit.getOnlinePlayers().size() < 2) {
+            player.sendMessage(ChatColor.RED + "Not enough players to start the game. Minimum required: 2");
             return true;
         }
 
-        Bukkit.broadcastMessage(ChatColor.GREEN + "Chaos Pillars game starting!");
+        StartGame startGame = new StartGame(
+                plugin,
+                plugin.getGameWorld(),
+                plugin.getScoreboardManager(),
+                plugin.itemGiveIntervalTicks
+        );
+        startGame.startGame();
 
-        StartGame chaosGame = new StartGame(plugin, plugin.getGameWorld(), plugin.getScoreboardManager(), plugin.itemGiveIntervalTicks);chaosGame.startGame();
-
-
+        player.sendMessage(ChatColor.GREEN + "Starting Chaos Pillars game...");
         return true;
     }
-
 }

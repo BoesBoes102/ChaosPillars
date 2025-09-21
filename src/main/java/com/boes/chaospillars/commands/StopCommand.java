@@ -3,6 +3,7 @@ package com.boes.chaospillars.commands;
 import com.boes.chaospillars.ChaosGame.EndGame;
 import com.boes.chaospillars.ChaosPillars;
 import com.boes.chaospillars.enums.GameState;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -25,12 +26,14 @@ public record StopCommand(ChaosPillars plugin) implements CommandExecutor {
         }
 
         if (plugin.getGameState() != GameState.RUNNING) {
-            player.sendMessage(ChatColor.RED + "There is no game running (yet)!");
+            player.sendMessage(ChatColor.RED + "There is no game currently running.");
             return true;
         }
 
-        EndGame endGame = new EndGame(plugin, plugin.getGameWorld(), plugin.getActivePlayers(), plugin.getQuitters(), plugin.getLastDamager(), plugin.playerStats, plugin.itemTask);
+        EndGame endGame = new EndGame(plugin);
         endGame.endGame();
+
+        Bukkit.broadcastMessage(ChatColor.RED + "The Chaos Pillars game has been stopped by " + player.getName() + "!");
         return true;
     }
 }

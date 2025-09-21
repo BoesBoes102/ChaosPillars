@@ -3,7 +3,7 @@ plugins {
 }
 
 group = "com.boes.chaospillars"
-version = "1.7.4"
+version = "1.7.6"
 
 repositories {
     mavenCentral()

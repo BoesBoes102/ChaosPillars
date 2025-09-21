@@ -3,7 +3,6 @@ package com.boes.chaospillars.tasks;
 import com.boes.chaospillars.ChaosPillars;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
-import org.bukkit.World;
 import org.bukkit.boss.BarColor;
 import org.bukkit.boss.BarStyle;
 import org.bukkit.boss.BossBar;
@@ -18,13 +17,10 @@ public class LavaCountdownTask extends BukkitRunnable {
     private final int lavaDelay = 150;
     private int countdown;
     private BossBar lavaBossBar;
-    private final World gameWorld;
 
-    public LavaCountdownTask(ChaosPillars plugin, World gameWorld) {
+    public LavaCountdownTask(ChaosPillars plugin) {
         this.plugin = plugin;
-        this.gameWorld = gameWorld;
         this.countdown = plugin.timer - lavaDelay;
-
 
         lavaBossBar = Bukkit.createBossBar(
                 ChatColor.RED + "Lava in " + countdown + "s",
@@ -32,20 +28,19 @@ public class LavaCountdownTask extends BukkitRunnable {
                 BarStyle.SOLID
         );
 
-
         for (UUID uuid : plugin.getActivePlayers()) {
             Player player = Bukkit.getPlayer(uuid);
             if (player != null) lavaBossBar.addPlayer(player);
         }
         lavaBossBar.setVisible(true);
+    }
 
-
+    public void start() {
         this.runTaskTimer(plugin, 0L, 20L);
     }
 
     @Override
     public void run() {
-
         for (UUID uuid : plugin.getActivePlayers()) {
             Player player = Bukkit.getPlayer(uuid);
             if (player != null && !lavaBossBar.getPlayers().contains(player)) {
@@ -54,15 +49,19 @@ public class LavaCountdownTask extends BukkitRunnable {
         }
 
         if (countdown <= 0) {
-            lavaBossBar.setTitle(ChatColor.RED + "Lava is rising!");
-            lavaBossBar.setProgress(1.0);
-            new LavaRiseTask(plugin, gameWorld);
+            plugin.lavaRiseTask = new LavaRiseTask(plugin);
+            plugin.lavaRiseTask.start();
             stop();
             return;
         }
 
         lavaBossBar.setTitle(ChatColor.RED + "Lava in " + countdown + "s");
-        lavaBossBar.setProgress((double) countdown / (plugin.timer - lavaDelay));
+        int total = plugin.timer - lavaDelay;
+        if (total <= 0) total = 1;
+        double progress = (double) countdown / total;
+        progress = Math.max(0.0, Math.min(1.0, progress));
+        lavaBossBar.setProgress(progress);
+
         countdown--;
     }
 

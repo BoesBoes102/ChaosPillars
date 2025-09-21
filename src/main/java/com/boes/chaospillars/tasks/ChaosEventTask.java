@@ -2,7 +2,7 @@ package com.boes.chaospillars.tasks;
 
 import com.boes.chaospillars.ChaosPillars;
 import org.bukkit.*;
-import org.bukkit.entity.*;
+import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
@@ -10,16 +10,20 @@ import org.bukkit.util.Vector;
 
 import java.util.*;
 
-
 public class ChaosEventTask {
 
     private final ChaosPillars plugin;
     private final Random random = new Random();
-    private final World gameWorld;
 
     public ChaosEventTask(ChaosPillars plugin, World gameWorld) {
+        if (plugin == null || plugin.getGameWorld() == null) {
+            throw new IllegalArgumentException("Plugin and gameWorld cannot be null");
+        }
         this.plugin = plugin;
-        this.gameWorld = gameWorld;
+    }
+
+    private World getGameWorld() {
+        return plugin.getGameWorld();
     }
 
     private List<Player> getActivePlayers() {
@@ -33,52 +37,21 @@ public class ChaosEventTask {
         return result;
     }
 
-
     public void triggerRandomEvent() {
         int index = random.nextInt(10);
         String eventName;
 
         switch (index) {
-            case 0 -> {
-                changeWeather();
-                eventName = "Weather Change";
-            }
-            case 1 -> {
-                randomTimeChange();
-                eventName = "Time Shift";
-            }
-            case 2 -> {
-                swapPositions();
-                eventName = "Swap Positions";
-            }
-            case 3 -> {
-                swapInventories();
-                eventName = "Swap Inventories";
-            }
-            case 4 -> {
-                applyGlow();
-                eventName = "No Hiding";
-            }
-            case 5 -> {
-                dropAnvilsAbovePlayers();
-                eventName = "Anvil Drop";
-            }
-            case 6 -> {
-                randomNegativeEffect();
-                eventName = "Negative Potion Effect";
-            }
-            case 7 -> {
-                giveThrowable();
-                eventName = "Throwable Items";
-            }
-            case 8 -> {
-                swapHealthFoodSaturation();
-                eventName = "Swap Health";
-            }
-            case 9 -> {
-                makeEveryoneJump();
-                eventName = "Simon Says Jump";
-            }
+            case 0 -> { changeWeather(); eventName = "Weather Change"; }
+            case 1 -> { randomTimeChange(); eventName = "Time Shift"; }
+            case 2 -> { swapPositions(); eventName = "Swap Positions"; }
+            case 3 -> { swapInventories(); eventName = "Swap Inventories"; }
+            case 4 -> { applyGlow(); eventName = "No Hiding"; }
+            case 5 -> { dropAnvilsAbovePlayers(); eventName = "Anvil Drop"; }
+            case 6 -> { randomNegativeEffect(); eventName = "Negative Potion Effect"; }
+            case 7 -> { giveThrowable(); eventName = "Throwable Items"; }
+            case 8 -> { swapHealthFoodSaturation(); eventName = "Swap Health"; }
+            case 9 -> { makeEveryoneJump(); eventName = "Simon Says Jump"; }
             default -> eventName = "Unknown Event";
         }
 
@@ -86,26 +59,26 @@ public class ChaosEventTask {
     }
 
     public void changeWeather() {
-        if (gameWorld == null) return;
-        gameWorld.setStorm(!gameWorld.hasStorm());
+        World world = getGameWorld();
+        if (world == null) return;
+        world.setStorm(!world.hasStorm());
     }
 
-
     public void randomTimeChange() {
-        if (gameWorld == null) return;
-        gameWorld.setTime(random.nextInt(24000));
+        World world = getGameWorld();
+        if (world == null) return;
+        world.setTime(random.nextInt(24000));
     }
 
     public void swapPositions() {
-        List<Player> players = new ArrayList<>(getActivePlayers());
+        List<Player> players = getActivePlayers();
         if (players.size() < 2) return;
 
-        List<Location> locations = players.stream().map(Player::getLocation).toList();
-        List<Player> shuffledPlayers = new ArrayList<>(players);
+        List<Location> locations = new ArrayList<>();
+        for (Player p : players) locations.add(p.getLocation());
 
-        do {
-            Collections.shuffle(shuffledPlayers);
-        } while (noDoubles(players, shuffledPlayers));
+        List<Player> shuffledPlayers = new ArrayList<>(players);
+        do { Collections.shuffle(shuffledPlayers); } while (noDoubles(players, shuffledPlayers));
 
         for (int i = 0; i < players.size(); i++) {
             Location loc = locations.get(players.indexOf(shuffledPlayers.get(i)));
@@ -114,7 +87,7 @@ public class ChaosEventTask {
     }
 
     public void swapInventories() {
-        List<Player> players = new ArrayList<>(getActivePlayers());
+        List<Player> players = getActivePlayers();
         if (players.size() < 2) return;
 
         List<ItemStack[]> contents = new ArrayList<>();
@@ -128,15 +101,14 @@ public class ChaosEventTask {
         }
 
         List<Player> shuffledPlayers = new ArrayList<>(players);
-        do {
-            Collections.shuffle(shuffledPlayers);
-        } while (noDoubles(players, shuffledPlayers));
+        do { Collections.shuffle(shuffledPlayers); } while (noDoubles(players, shuffledPlayers));
 
         for (int i = 0; i < players.size(); i++) {
             int fromIndex = players.indexOf(shuffledPlayers.get(i));
-            players.get(i).getInventory().setContents(contents.get(fromIndex));
-            players.get(i).getInventory().setArmorContents(armor.get(fromIndex));
-            players.get(i).getInventory().setItemInOffHand(offhands.get(fromIndex));
+            Player target = players.get(i);
+            target.getInventory().setContents(contents.get(fromIndex));
+            target.getInventory().setArmorContents(armor.get(fromIndex));
+            target.getInventory().setItemInOffHand(offhands.get(fromIndex));
         }
     }
 
@@ -169,8 +141,8 @@ public class ChaosEventTask {
         };
 
         for (Player player : getActivePlayers()) {
-            PotionEffectType randomEffect = negativeEffectTypes[random.nextInt(negativeEffectTypes.length)];
-            player.addPotionEffect(new PotionEffect(randomEffect, duration, amplifier));
+            PotionEffectType effect = negativeEffectTypes[random.nextInt(negativeEffectTypes.length)];
+            player.addPotionEffect(new PotionEffect(effect, duration, amplifier));
         }
     }
 
@@ -183,7 +155,7 @@ public class ChaosEventTask {
     }
 
     public void swapHealthFoodSaturation() {
-        List<Player> players = new ArrayList<>(getActivePlayers());
+        List<Player> players = getActivePlayers();
         if (players.size() < 2) return;
 
         List<Double> healthList = new ArrayList<>();
@@ -197,9 +169,7 @@ public class ChaosEventTask {
         }
 
         List<Player> shuffledPlayers = new ArrayList<>(players);
-        do {
-            Collections.shuffle(shuffledPlayers);
-        } while (noDoubles(players, shuffledPlayers));
+        do { Collections.shuffle(shuffledPlayers); } while (noDoubles(players, shuffledPlayers));
 
         for (int i = 0; i < players.size(); i++) {
             int from = players.indexOf(shuffledPlayers.get(i));
@@ -217,11 +187,10 @@ public class ChaosEventTask {
             player.setVelocity(player.getVelocity().add(new Vector(0, 1.2, 0)));
         }
     }
+
     private boolean noDoubles(List<Player> original, List<Player> shuffled) {
         for (int i = 0; i < original.size(); i++) {
-            if (original.get(i).equals(shuffled.get(i))) {
-                return true;
-            }
+            if (original.get(i).equals(shuffled.get(i))) return true;
         }
         return false;
     }

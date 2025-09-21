@@ -2,7 +2,6 @@ package com.boes.chaospillars.scoreboard;
 
 import com.boes.chaospillars.stats.PlayerStats;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.scoreboard.*;
 
@@ -13,22 +12,30 @@ public record IdleScoreboard(Map<UUID, PlayerStats> playerStats) {
 
     public void updateIdleScoreboard(Player player) {
         Scoreboard idleBoard = Bukkit.getScoreboardManager().getNewScoreboard();
-        Objective idleObjective = idleBoard.registerNewObjective("idle", "dummy", ChatColor.GOLD + "Your Stats");
+        Objective idleObjective = idleBoard.registerNewObjective(
+                "idle", "dummy", ScoreboardTranslator.translate("&6Your Stats")
+        );
         idleObjective.setDisplaySlot(DisplaySlot.SIDEBAR);
 
         PlayerStats stats = playerStats.getOrDefault(player.getUniqueId(), new PlayerStats());
 
-        int score = 11;
-        idleObjective.getScore(ScoreboardTranslator.translate("&6Chaos Pillars")).setScore(score--);
-        idleObjective.getScore(ScoreboardTranslator.translate("§7─────────────── ")).setScore(score--);
-        idleObjective.getScore(ScoreboardTranslator.translate("§ePlayer: §f" + player.getName())).setScore(score--);
-        idleObjective.getScore(ScoreboardTranslator.translate("§7Kills: §f" + stats.getKills())).setScore(score--);
-        idleObjective.getScore(ScoreboardTranslator.translate("§7Deaths: §f" + stats.getDeaths())).setScore(score--);
-        idleObjective.getScore(ScoreboardTranslator.translate("§7Wins: §f" + stats.getWins())).setScore(score--);
-        idleObjective.getScore(ScoreboardTranslator.translate("§7Games Played: §f" + stats.getGamesPlayed())).setScore(score--);
-        idleObjective.getScore(ScoreboardTranslator.translate("§7Win Streak: §f" + stats.getWinStreak())).setScore(score--);
-        idleObjective.getScore(ScoreboardTranslator.translate("§7Loss Streak: §f" + stats.getLossStreak())).setScore(score--);
-        idleObjective.getScore(ScoreboardTranslator.translate("§7───────────────")).setScore(score--);
+        String[] lines = {
+                "&6Chaos Pillars",
+                "&7───────────────",
+                "&ePlayer: &f" + player.getName(),
+                "&7Kills: &f" + stats.getKills(),
+                "&7Deaths: &f" + stats.getDeaths(),
+                "&7Wins: &f" + stats.getWins(),
+                "&7Games Played: &f" + stats.getGamesPlayed(),
+                "&7Win Streak: &f" + stats.getWinStreak(),
+                "&7Loss Streak: &f" + stats.getLossStreak(),
+                "&7───────────────"
+        };
+
+        int score = lines.length;
+        for (String line : lines) {
+            idleObjective.getScore(ScoreboardTranslator.translate(line)).setScore(score--);
+        }
 
         player.setScoreboard(idleBoard);
     }

@@ -6,7 +6,6 @@ import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
@@ -34,8 +33,8 @@ public class StatsManager {
         this.statsConfig = YamlConfiguration.loadConfiguration(statsFile);
     }
 
-    public void saveStats(Map<UUID, PlayerStats> statsMap) {
-        for (Map.Entry<UUID, PlayerStats> entry : statsMap.entrySet()) {
+    public void saveStats() {
+        for (Map.Entry<UUID, PlayerStats> entry : plugin.playerStats.entrySet()) {
             String path = "players." + entry.getKey();
             PlayerStats stats = entry.getValue();
 
@@ -47,7 +46,6 @@ public class StatsManager {
             statsConfig.set(path + ".highestWinStreak", stats.getHighestWinStreak());
             statsConfig.set(path + ".lossStreak", stats.getLossStreak());
             statsConfig.set(path + ".highestLossStreak", stats.getHighestLossStreak());
-
         }
 
         try {
@@ -58,9 +56,10 @@ public class StatsManager {
         }
     }
 
-    public Map<UUID, PlayerStats> loadStats() {
-        Map<UUID, PlayerStats> loadedStats = new HashMap<>();
-        if (!statsConfig.isConfigurationSection("players")) return loadedStats;
+    public void loadStats() {
+        plugin.playerStats.clear();
+
+        if (!statsConfig.isConfigurationSection("players")) return;
 
         for (String uuidString : Objects.requireNonNull(statsConfig.getConfigurationSection("players")).getKeys(false)) {
             UUID uuid = UUID.fromString(uuidString);
@@ -75,9 +74,7 @@ public class StatsManager {
             stats.setLossStreak(statsConfig.getInt("players." + uuidString + ".lossStreak", 0));
             stats.setHighestLossStreak(statsConfig.getInt("players." + uuidString + ".highestLossStreak", 0));
 
-            loadedStats.put(uuid, stats);
+            plugin.playerStats.put(uuid, stats);
         }
-
-        return loadedStats;
     }
 }

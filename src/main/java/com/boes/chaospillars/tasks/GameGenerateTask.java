@@ -1,26 +1,36 @@
 package com.boes.chaospillars.tasks;
 
-import org.bukkit.*;
+import com.boes.chaospillars.ChaosPillars;
+import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.World;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
 
 public class GameGenerateTask {
+
     private final World gameWorld;
     private final List<Material> floorBlockTypes;
     private final List<Material> pillarBlockTypes;
     private final Random random = new Random();
 
-    public GameGenerateTask(World gameWorld, List<Material> floorBlockTypes, List<Material> pillarBlockTypes) {
-        this.gameWorld = gameWorld;
-        this.floorBlockTypes = floorBlockTypes;
-        this.pillarBlockTypes = pillarBlockTypes;
+    public GameGenerateTask(ChaosPillars plugin) {
+        this.gameWorld = plugin.getGameWorld();
+        this.floorBlockTypes = plugin.floorBlockTypes;
+        this.pillarBlockTypes = plugin.pillarBlockTypes;
     }
 
     public List<Location> generateArena(int pillarRadius, int pillarHeight, int baseY, int pillarCount) {
+        if (gameWorld == null || !gameWorld.equals(Bukkit.getWorld(gameWorld.getName()))) {
+            return new ArrayList<>();
+        }
         generateFloor(baseY);
         return generatePillars(pillarRadius, pillarHeight, baseY, pillarCount);
     }
-
 
     private void generateFloor(int baseY) {
         if (floorBlockTypes.isEmpty()) {
@@ -36,7 +46,7 @@ public class GameGenerateTask {
 
         for (int x = minX; x <= maxX; x++) {
             for (int z = minZ; z <= maxZ; z++) {
-                gameWorld.getBlockAt(x, -64, z).setType(Material.AIR, false);
+                gameWorld.getBlockAt(x, baseY - 1, z).setType(Material.AIR, false);
             }
         }
 
@@ -58,8 +68,6 @@ public class GameGenerateTask {
                 ChatColor.AQUA + "!");
     }
 
-
-
     private List<Location> generatePillars(int radius, int height, int baseY, int count) {
         List<Location> basePillarLocations = new ArrayList<>();
 
@@ -71,10 +79,8 @@ public class GameGenerateTask {
             currentRoundPillarMaterial = pillarBlockTypes.get(random.nextInt(pillarBlockTypes.size()));
         }
 
-
         Bukkit.broadcastMessage(ChatColor.LIGHT_PURPLE + "This round's pillars are made of " +
                 ChatColor.YELLOW + currentRoundPillarMaterial.name().toLowerCase().replace('_', ' ') + "!");
-
 
         for (int i = 0; i < count; i++) {
             double angle = 2 * Math.PI * i / count;

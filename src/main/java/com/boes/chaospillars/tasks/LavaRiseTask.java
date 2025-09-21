@@ -1,26 +1,28 @@
 package com.boes.chaospillars.tasks;
 
+import com.boes.chaospillars.ChaosPillars;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.WorldBorder;
 import org.bukkit.block.Block;
 import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.plugin.java.JavaPlugin;
 
 public class LavaRiseTask {
-
-    private final JavaPlugin plugin;
+    private final ChaosPillars plugin;
     private final World gameWorld;
     private BukkitRunnable lavaTask;
 
-    public LavaRiseTask(JavaPlugin plugin, World gameWorld) {
+    public LavaRiseTask(ChaosPillars plugin) {
+        if (plugin == null || plugin.getGameWorld() == null) {
+            throw new IllegalArgumentException("Plugin and gameWorld cannot be null");
+        }
         this.plugin = plugin;
-        this.gameWorld = gameWorld;
-        start();
+        this.gameWorld = plugin.getGameWorld();
     }
 
-    private void start() {
+    public void start() {
         int lavaStartY = -64;
         int lavaEndY = -12;
         int lavaDurationSeconds = 80;
@@ -41,6 +43,11 @@ public class LavaRiseTask {
 
             @Override
             public void run() {
+                if (!gameWorld.equals(Bukkit.getWorld(gameWorld.getName()))) {
+                    cancel();
+                    return;
+                }
+
                 if (currentY >= lavaEndY || ticksPassed >= totalTicks) {
                     cancel();
                     return;

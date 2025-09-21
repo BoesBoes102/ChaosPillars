@@ -1,27 +1,18 @@
+# ChaosPillars Configuration File
 game:
+  # Game timer in seconds must be atleast 180
   timer-seconds: 300
+
+  # Powerup cooldown in seconds
   powerup-cooldown-seconds: 30
+
+  # Event cooldown in seconds
   event-cooldown-seconds: 20
+
+  # Item give interval in seconds
   item-give-interval-seconds: 3
-  pillar-block-types:
-    - BEDROCK
-    - SAND
-    - NETHERRACK
-    - END_STONE
-    - CHERRY_LOG
-    - CRAFTING_TABLE
-    - CHERRY_LEAVES
-    - COBBLESTONE
-    - OBSIDIAN
-    - REDSTONE_BLOCK
-    - TNT
-    - NOTE_BLOCK
-    - SEA_LANTERN
-    - MELON
-    - PUMPKIN
-    - AMETHYST_BLOCK
-    - GLASS
-    - GLASS_PANE
+
+  # Floor block types (must be valid Minecraft block names)
   floor-block-types:
     - END_STONE
     - STONE
@@ -49,3 +40,23 @@ game:
     - LAVA
     - WATER
 
+  # Pillar block types (must be valid Minecraft block names)
+  pillar-block-types:
+    - BEDROCK
+    - SAND
+    - NETHERRACK
+    - END_STONE
+    - CHERRY_LOG
+    - CRAFTING_TABLE
+    - CHERRY_LEAVES
+    - COBBLESTONE
+    - OBSIDIAN
+    - REDSTONE_BLOCK
+    - TNT
+    - NOTE_BLOCK
+    - SEA_LANTERN
+    - MELON
+    - PUMPKIN
+    - AMETHYST_BLOCK
+    - GLASS
+    - GLASS_PANE

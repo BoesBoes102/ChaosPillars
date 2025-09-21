@@ -1,5 +1,6 @@
 package com.boes.chaospillars.tasks;
 
+import com.boes.chaospillars.ChaosPillars;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
@@ -13,11 +14,11 @@ import java.util.Set;
 import java.util.UUID;
 
 public class RandomPositiveEffectTask extends BukkitRunnable {
-    private final Set<UUID> activePlayers;
+    private final ChaosPillars plugin;
     private final Random random = new Random();
 
-    public RandomPositiveEffectTask(Set<UUID> activePlayers) {
-        this.activePlayers = activePlayers;
+    public RandomPositiveEffectTask(ChaosPillars plugin) {
+        this.plugin = plugin;
     }
 
     @Override
@@ -41,12 +42,14 @@ public class RandomPositiveEffectTask extends BukkitRunnable {
                 PotionEffectType.SLOW_FALLING
         );
 
+        Set<UUID> activePlayers = plugin.getActivePlayers();
+
         for (UUID uuid : activePlayers) {
             Player player = Bukkit.getPlayer(uuid);
             if (player != null && player.isOnline() && !player.isDead()) {
                 PotionEffectType chosen = effects.get(random.nextInt(effects.size()));
                 player.addPotionEffect(new PotionEffect(chosen, 20 * 20, 0, false, true));
-                player.sendMessage(ChatColor.AQUA + "✨ You received " + chosen.getName() + "!");
+                player.sendMessage(ChatColor.AQUA + "[Chaos] You received " + chosen.getName() + "!");
             }
         }
     }

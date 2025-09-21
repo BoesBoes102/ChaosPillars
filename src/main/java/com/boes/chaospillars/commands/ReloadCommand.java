@@ -1,7 +1,7 @@
 package com.boes.chaospillars.commands;
 
 import com.boes.chaospillars.ChaosPillars;
-import com.boes.chaospillars.tasks.ReloadConfigTask;
+import com.boes.chaospillars.config.ReloadConfigTask;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;

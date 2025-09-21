@@ -1,5 +1,6 @@
 package com.boes.chaospillars.tasks;
 
+import com.boes.chaospillars.ChaosPillars;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
@@ -8,14 +9,12 @@ import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.*;
 
-public class ItemTask extends BukkitRunnable {
+public class ItemTask {
 
-    private final JavaPlugin plugin;
-    private final Set<UUID> activePlayers;
+    private final ChaosPillars plugin;
     private final int itemGiveIntervalTicks;
     private final Random random = new Random();
     private BukkitRunnable runnable;
@@ -24,13 +23,13 @@ public class ItemTask extends BukkitRunnable {
             .filter(mat -> mat.isItem() && mat != Material.AIR && mat != Material.CAVE_AIR && mat != Material.VOID_AIR)
             .toList();
 
-    public ItemTask(JavaPlugin plugin, Set<UUID> activePlayers, int itemGiveIntervalTicks) {
+    public ItemTask(ChaosPillars plugin, int itemGiveIntervalTicks) {
         this.plugin = plugin;
-        this.activePlayers = activePlayers;
         this.itemGiveIntervalTicks = itemGiveIntervalTicks;
+        start();
     }
 
-    public void start() {
+    private void start() {
         stop();
 
         runnable = new BukkitRunnable() {
@@ -38,6 +37,8 @@ public class ItemTask extends BukkitRunnable {
 
             @Override
             public void run() {
+                Set<UUID> activePlayers = plugin.getActivePlayers();
+
                 if (secondsLeft <= 0) {
                     for (UUID uuid : new HashSet<>(activePlayers)) {
                         Player player = Bukkit.getPlayer(uuid);
@@ -74,10 +75,5 @@ public class ItemTask extends BukkitRunnable {
             runnable.cancel();
             runnable = null;
         }
-    }
-
-    @Override
-    public void run() {
-
     }
 }

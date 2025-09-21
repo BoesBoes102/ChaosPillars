@@ -1,91 +1,99 @@
 package com.boes.chaospillars.listeners;
 
+import com.boes.chaospillars.ChaosGame.EndGame;
+import com.boes.chaospillars.ChaosPillars;
+import com.boes.chaospillars.enums.GameState;
 import com.boes.chaospillars.stats.PlayerStats;
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.GameMode;
+import org.bukkit.*;
 import org.bukkit.OfflinePlayer;
-import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.PlayerDeathEvent;
 
-import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 
-public record DeathListener(
-        Map<UUID, PlayerStats> playerStats,
-        Map<UUID, UUID> lastDamager,
-        Set<UUID> activePlayers,
-        Set<UUID> quitters,
-        Runnable endGameCallback,
-        World gameWorld
-) implements Listener {
+public record DeathListener(ChaosPillars plugin) implements Listener {
 
     @EventHandler
     public void onPlayerDeath(PlayerDeathEvent event) {
-        Player dead = event.getEntity();
+        if (plugin.getGameState() != GameState.RUNNING) return;
 
-        if (!dead.getWorld().equals(gameWorld)) return;
+        Player dead = event.getEntity();
+        if (!dead.getWorld().equals(plugin.getGameWorld())) return;
 
         UUID deadId = dead.getUniqueId();
         UUID killerId = null;
-
         if (dead.getKiller() != null) {
             killerId = dead.getKiller().getUniqueId();
-        } else if (lastDamager.containsKey(deadId)) {
-            killerId = lastDamager.get(deadId);
+        } else if (plugin.getLastDamager().containsKey(deadId)) {
+            killerId = plugin.getLastDamager().get(deadId);
         }
 
-        // Update stats for dead player
-        PlayerStats deadStats = playerStats.computeIfAbsent(deadId, k -> new PlayerStats());
-        deadStats.addDeath();
-        deadStats.addLoss();
-        deadStats.setWinStreak(0);
-
-        // Build death message
-        if (quitters.contains(deadId)) {
-            event.setDeathMessage(ChatColor.RED + dead.getName() + ChatColor.GRAY + " left the game.");
-            quitters.remove(deadId);
-        } else if (killerId != null && !killerId.equals(deadId)) {
+        if (killerId != null && !killerId.equals(deadId)) {
             OfflinePlayer killer = Bukkit.getOfflinePlayer(killerId);
-            PlayerStats killerStats = playerStats.computeIfAbsent(killerId, k -> new PlayerStats());
+            String killerName = (killer.getName() != null) ? killer.getName() : "Unknown";
+            PlayerStats killerStats = plugin.getPlayerStats().computeIfAbsent(killerId, k -> new PlayerStats());
             killerStats.addKill();
-            event.setDeathMessage(ChatColor.RED + dead.getName() + ChatColor.GRAY + " was killed by " + ChatColor.YELLOW + killer.getName());
+            event.setDeathMessage(ChatColor.RED + dead.getName() + ChatColor.GRAY + " was killed by " + ChatColor.YELLOW + killerName);
+        } else if (plugin.getQuitters().contains(deadId)) {
+            event.setDeathMessage(ChatColor.RED + dead.getName() + ChatColor.GRAY + " left the game.");
+            plugin.getQuitters().remove(deadId);
         } else {
             event.setDeathMessage(ChatColor.RED + dead.getName() + ChatColor.GRAY + " died.");
         }
 
-        // Clean up
-        lastDamager.remove(deadId);
-        activePlayers.remove(deadId);
+        plugin.getLastDamager().remove(deadId);
+        plugin.getActivePlayers().remove(deadId);
+
+        dead.teleport(plugin.getGameWorld().getSpawnLocation());
         dead.setGameMode(GameMode.SPECTATOR);
 
-        // ✅ Win condition check
-        if (activePlayers.size() == 1) {
-            UUID winnerId = activePlayers.iterator().next();
+        plugin.getServer().getScheduler().runTaskLater(plugin, this::checkWinCondition, 5L);
+    }
+
+    private void checkWinCondition() {
+        if (plugin.getActivePlayers().size() == 1) {
+            UUID winnerId = plugin.getActivePlayers().iterator().next();
             announceWinner(winnerId);
-            endGameCallback.run();
-        } else if (activePlayers.isEmpty()) {
+        } else if (plugin.getActivePlayers().isEmpty()) {
             Bukkit.broadcastMessage(ChatColor.GRAY + "Nobody won the Chaos Pillars game.");
-            endGameCallback.run();
+            plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+                EndGame endGame = new EndGame(plugin);
+                endGame.endGame();
+            }, 20L);
         }
     }
 
     private void announceWinner(UUID winnerId) {
         Player winner = Bukkit.getPlayer(winnerId);
         if (winner != null) {
-            Bukkit.broadcastMessage(ChatColor.GOLD + winner.getName() + " has won the Chaos Pillars game!");
-            PlayerStats winnerStats = playerStats.computeIfAbsent(winnerId, k -> new PlayerStats());
+            Bukkit.broadcastMessage(ChatColor.GOLD + "🎉 " + winner.getName() + " has won the Chaos Pillars game! 🎉");
+
+            PlayerStats winnerStats = plugin.getPlayerStats().computeIfAbsent(winnerId, k -> new PlayerStats());
             winnerStats.addWin();
             winnerStats.resetLossStreak();
             int newStreak = winnerStats.getWinStreak() + 1;
             winnerStats.setWinStreak(newStreak);
+
             if (newStreak > winnerStats.getHighestWinStreak()) {
                 winnerStats.setHighestWinStreak(newStreak);
+                if (newStreak >= 3) {
+                    Bukkit.broadcastMessage(ChatColor.YELLOW + winner.getName() + " is on a " + newStreak + " game win streak!");
+                }
             }
+
+            winner.teleport(plugin.getGameWorld().getSpawnLocation());
+            winner.setGameMode(GameMode.SPECTATOR);
+            winner.sendTitle(ChatColor.GOLD + "🎉 VICTORY! 🎉", ChatColor.YELLOW + "You won the Chaos Pillars!", 10, 60, 20);
+        } else {
+            Bukkit.broadcastMessage(ChatColor.GOLD + "The game was won by a player (offline).");
         }
+
+
+        plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+            EndGame endGame = new EndGame(plugin);
+            endGame.endGame();
+        }, 60L);
     }
 }

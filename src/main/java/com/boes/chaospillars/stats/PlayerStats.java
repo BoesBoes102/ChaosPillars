@@ -5,8 +5,8 @@ public class PlayerStats {
     private int gamesPlayed;
     private int kills;
     private int deaths;
-    private int winStreak;
-    private int highestWinStreak;
+    private int winStreak = 0;
+    private int highestWinStreak = 0;
     private int lossStreak = 0;
     private int highestLossStreak = 0;
 
@@ -15,7 +15,7 @@ public class PlayerStats {
     }
 
     public void setWins(int wins) {
-        this.wins = wins;
+        this.wins = Math.max(0, wins);
     }
 
     public int getGamesPlayed() {
@@ -23,7 +23,23 @@ public class PlayerStats {
     }
 
     public void setGamesPlayed(int gamesPlayed) {
-        this.gamesPlayed = gamesPlayed;
+        this.gamesPlayed = Math.max(0, gamesPlayed);
+    }
+
+    public void addWin() {
+        wins++;
+        winStreak++;
+        if (winStreak > highestWinStreak) {
+            highestWinStreak = winStreak;
+        }
+    }
+
+    public void addGamePlayed() {
+        gamesPlayed++;
+    }
+
+    public void resetWinStreak() {
+        winStreak = 0;
     }
 
     public int getKills() {
@@ -31,7 +47,11 @@ public class PlayerStats {
     }
 
     public void setKills(int kills) {
-        this.kills = kills;
+        this.kills = Math.max(0, kills);
+    }
+
+    public void addKill() {
+        kills++;
     }
 
     public int getDeaths() {
@@ -39,19 +59,7 @@ public class PlayerStats {
     }
 
     public void setDeaths(int deaths) {
-        this.deaths = deaths;
-    }
-
-    public void addWin() {
-        wins++;
-    }
-
-    public void addGamePlayed() {
-        gamesPlayed++;
-    }
-
-    public void addKill() {
-        kills++;
+        this.deaths = Math.max(0, deaths);
     }
 
     public void addDeath() {
@@ -70,16 +78,16 @@ public class PlayerStats {
         return winStreak;
     }
 
-    public void setWinStreak(int winStreak) {
-        this.winStreak = winStreak;
-    }
-
     public int getHighestWinStreak() {
         return highestWinStreak;
     }
 
+    public void setWinStreak(int winStreak) {
+        this.winStreak = Math.max(0, winStreak);
+    }
+
     public void setHighestWinStreak(int highestWinStreak) {
-        this.highestWinStreak = highestWinStreak;
+        this.highestWinStreak = Math.max(0, highestWinStreak);
     }
 
     public int getLossStreak() {
@@ -87,7 +95,7 @@ public class PlayerStats {
     }
 
     public void setLossStreak(int lossStreak) {
-        this.lossStreak = lossStreak;
+        this.lossStreak = Math.max(0, lossStreak);
     }
 
     public int getHighestLossStreak() {
@@ -95,7 +103,7 @@ public class PlayerStats {
     }
 
     public void setHighestLossStreak(int highestLossStreak) {
-        this.highestLossStreak = highestLossStreak;
+        this.highestLossStreak = Math.max(0, highestLossStreak);
     }
 
     public void addLoss() {
