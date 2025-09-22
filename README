@@ -1,64 +1,41 @@
-# ⚡ Chaos Pillars
+Ｃｈａｏｓ Ｐｉｌｌａｒｓ
 
-**Chaos Pillars** is a chaotic Minecraft minigame inspired by *Cubecraft Pillars of Fortune* — rebuilt for **Paper 1.21.7**, with full configuration support and extra madness.
+Ｄｏ ｙｏｕ ｗａｎｔ ｔｏ ｐｌａｙ ａ ｆｕｎ ｍｉｎｉｇａｍｅ ｗｉｔｈ ｙｏｕｒ ｆｒｉｅｎｄｓ？ Ｔｈｅｎ ｔｈｉｓ ｉｓ ｔｈｅ ｇａｍｅ ｆｏｒ ｙｏｕ！ Ｃｈａｏｓｐｉｌｌａｒｓ ｉｓ ａ ｍｉｎｉｇａｍｅ ｂａｓｅｄ ｏｎ ｔｈｅ Ｃｕｂｅｃｒａｆｔ ｇａｍｅ Ｐｉｌｌａｒｓ ｏｆ Ｆｏｒｔｕｎｅ ｂｕｔ ｔｈｉｓ ｖｅｒｓｉｏｎ ｉｓ ｍｏｒｅ ｃｈａｏｔｉｃ ａｎｄ ｆｕｎ！
 
----
+✨ Ｆｅａｔｕｒｅｓ
+－ 🎯 ｕｐ ｔｏ １０ ｐｌａｙｅｒ ｓｕｐｐｏｒｔ
+－ 🏗️ Ｃｕｓｔｏｍ ｐｉｌｌａｒ ａｎｄ ｆｌｏｏｒ ｂｌｏｃｋ ｔｙｐｅｓ
+－ ⚙️ Ａｌｌ ｔｉｍｉｎｇｓ ａｒｅ ｆｕｌｌｙ ｃｏｎｆｉｇｕｒａｂｌｅ！
+－ 🧹 Ａｕｔｏｍａｔｉｃａｌｌｙ ｒｅｓｅｔｓ ａｆｔｅｒ ｅｖｅｒｙ ｇａｍｅ．
+－ 🎲 Ｒａｎｄｏｍ ｐｏｗｅｒｕｐｓ ａｎｄ ｅｖｅｎｔｓ！
+－ 📊 Ｓｔａｔｓ ａｎｄ Ｓｃｏｒｅｂｏａｒｄ ｓｙｓｔｅｍ
 
-## ✨ Features
-- 🎯 Spawns **10 players** in a circle of chaos
-- 🏗️ Custom **pillar** and **floor** block types
-- ⚙️ Fully **configurable** via `config.yml`
-- 🧹 Auto **cleanup/reset** after each game
-- 🎲 Random **chaos events** (lava, mobs, swaps, etc.)
-- 📊 Built-in **stats & scoreboard system**
+⌨️ Ｃｏｍｍａｎｄｓ
+| `／ｃｈａｏｓ ｓｔａｒｔ` | Ｓｔａｒｔｓ ｔｈｅ Ｃｈａｏｓ Ｐｉｌｌａｒｓ ｇａｍｅ | ＯＰ |
+| `／ｃｈａｏｓ ｓｔｏｐ` | Ｓｔｏｐｓ／ｒｅｓｅｔ ｔｈｅ ｃｕｒｒｅｎｔ ｇａｍｅ | ＯＰ |
+| `／ｃｈａｏｓ ｒｅｌｏａｄ` | Ｒｅｌｏａｄｓ ｔｈｅ ｃｏｎｆｉｇ | ＯＰ |
+| `／ｃｈａｏｓ ｓｔａｔｓ` | Ｓｈｏｗｓ ｙｏｕｒ ｓｔａｔｓ | Ｅｖｅｒｙｏｎｅ |
 
----
 
-## ⌨️ Commands
-| Command | Description | Permission |
-|---------|-------------|------------|
-| `/chaos start` | Starts the Chaos Pillars game | OP |
-| `/chaos stop` | Stops/reset the current game | OP |
-| `/chaos reload` | Reloads the config | OP |
-| `/chaos stats` | Shows your stats | Everyone |
+📥 Ｉｎｓｔａｌｌａｔｉｏｎ
+１． Ｄｏｗｎｌｏａｄ ｔｈｅ ｌａｔｅｓｔ ｒｅｌｅａｓｅ
+２． Ｐｌａｃｅ ｉｔ ｉｎ ｙｏｕｒ ｐａｐｅｒ ｏｒ ｓｐｉｇｏｔ ｓｅｒｖｅｒ’ｓ ｐｌｕｇｉｎｓ ｆｏｌｄｅｒ
+３． Ｎｏｗ ｙｏｕ ｃａｎ ｐｌａｙ！
 
----
 
-## 📥 Installation
-1. Download the plugin jar
-2. Place it in your server’s `plugins/` folder
-3. Run a **Paper 1.21.7** server
-4. (Optional) Use a **void world** named `world` for best experience
+⚙️ Ｃｏｎｆｉｇｕｒａｔｉｏｎ
+－ Ｃｏｎｆｉｇ ｉｓ ｇｅｎｅｒａｔｅｄ ｉｎ ｔｈｅ ｐｌｕｇｉｎ’ｓ ｆｏｌｄｅｒ
+－ Ｒｅｌｏａｄ ｃｈａｎｇｅｓ ｉｎｓｔａｎｔｌｙ ｗｉｔｈ `／ｃｈａｏｓ ｒｅｌｏａｄ`
 
----
+Ｙｏｕ ｃａｎ ｃｕｓｔｏｍｉｚｅ：
+－ ✅ Ｐｉｌｌａｒ ｂｌｏｃｋ ｔｙｐｅｓ
+－ ✅ Ｆｌｏｏｒ ｂｌｏｃｋ ｔｙｐｅｓ
+－ ✅ Ｅｖｅｎｔ ｔｉｍｉｎｇ ａｎｄ ｒａｎｄｏｍｎｅｓｓ
 
-## ⚙️ Configuration
-- Config is generated in the plugin’s folder
-- Reload changes instantly with `/chaos reload`
+📜 Ｌｉｃｅｎｓｅ
+Ｌｉｃｅｎｓｅｄ ｕｎｄｅｒ ｔｈｅ ＊＊ＭＩＴ Ｌｉｃｅｎｓｅ＊＊．
+Ｓｅｅ ｔｈｅ [ＬｉＣＥＮＳＥ] ｆｉｌｅ ｆｏｒ ｄｅｔａｉｌｓ．
 
-You can customize:
-- ✅ Pillar block types
-- ✅ Floor block types
-- ✅ Event timing and randomness
-- ✅ Scoreboard settings
+📬 Ｃｏｎｔａｃｔ
+💬 Ｄｉｓｃｏｒｄ： ＢｏｅｓＢｏｅｓ１０２
 
----
-
-## 🛠️ Development
-- Currently supports **10 players**
-- Expanding for **more player support** in upcoming versions
-
----
-
-## 📜 License
-Licensed under the **MIT License**.
-See the [LICENSE](./LICENSE) file for details.
-
----
-
-## 📬 Contact
-💬 Discord: **BoesBoes102**
-
----
-
-🔥 Get ready to climb, fight, and survive the **Pillars of Chaos**!
