@@ -43,6 +43,11 @@ public record DeathListener(ChaosPillars plugin) implements Listener {
             event.setDeathMessage(ChatColor.RED + dead.getName() + ChatColor.GRAY + " died.");
         }
 
+        PlayerStats deadStats = plugin.getPlayerStats().computeIfAbsent(deadId, k -> new PlayerStats());
+        deadStats.addDeath();
+        deadStats.addLoss();
+        deadStats.resetWinStreak();
+
         plugin.getLastDamager().remove(deadId);
         plugin.getActivePlayers().remove(deadId);
 

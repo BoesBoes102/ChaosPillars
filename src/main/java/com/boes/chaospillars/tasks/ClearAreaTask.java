@@ -11,40 +11,50 @@ import org.bukkit.scheduler.BukkitRunnable;
 public class ClearAreaTask extends BukkitRunnable {
 
     private final World gameWorld;
-    private final int maxX;
+    private final int clearMaxX;
+    private final int clearMinZ;
+    private final int clearMaxZ;
+    private final int bedrockMinX;
+    private final int bedrockMaxX;
+    private final int bedrockMinZ;
+    private final int bedrockMaxZ;
     private final int maxY;
-    private final int minZ;
-    private final int maxZ;
     private int x;
     private int y;
     private int z;
 
-
     public ClearAreaTask(JavaPlugin plugin) {
-        if (!(plugin instanceof ChaosPillars)) {
+        if (!(plugin instanceof ChaosPillars chaosPlugin)) {
             throw new IllegalArgumentException("Plugin must be an instance of ChaosPillars");
         }
 
-        ChaosPillars chaosPlugin = (ChaosPillars) plugin;
         this.gameWorld = chaosPlugin.getGameWorld();
 
         if (gameWorld == null) {
             throw new IllegalStateException("Game world is not loaded yet!");
         }
 
-        int radius = (int) (gameWorld.getWorldBorder().getSize() / 2 + 1);
+        double borderSize = gameWorld.getWorldBorder().getSize();
         int centerX = gameWorld.getWorldBorder().getCenter().getBlockX();
         int centerZ = gameWorld.getWorldBorder().getCenter().getBlockZ();
 
-        int minX = centerX - radius;
-        this.maxX = centerX + radius;
-        this.minZ = centerZ - radius;
-        this.maxZ = centerZ + radius;
+        int clearRadius = (int) (borderSize / 2) + 2;
+        int clearMinX = centerX - clearRadius;
+        this.clearMaxX = centerX + clearRadius;
+        this.clearMinZ = centerZ - clearRadius;
+        this.clearMaxZ = centerZ + clearRadius;
+
+        int bedrockRadius = (int) (borderSize / 2);
+        this.bedrockMinX = centerX - bedrockRadius;
+        this.bedrockMaxX = centerX + bedrockRadius;
+        this.bedrockMinZ = centerZ - bedrockRadius;
+        this.bedrockMaxZ = centerZ + bedrockRadius;
+
         this.maxY = gameWorld.getMaxHeight();
 
-        this.x = minX;
+        this.x = clearMinX;
         this.y = maxY;
-        this.z = minZ;
+        this.z = clearMinZ;
     }
 
     @Override
@@ -56,14 +66,20 @@ public class ClearAreaTask extends BukkitRunnable {
 
         int changed = 0;
         int batchSize = 50000;
+        int minY = -64;
 
         while (changed < batchSize) {
             Block block = gameWorld.getBlockAt(x, y, z);
-            int minY = -64;
 
             if (y == minY) {
-                if (block.getType() != Material.BEDROCK) {
-                    block.setType(Material.BEDROCK, false);
+                if (x >= bedrockMinX && x <= bedrockMaxX && z >= bedrockMinZ && z <= bedrockMaxZ) {
+                    if (block.getType() != Material.BEDROCK) {
+                        block.setType(Material.BEDROCK, false);
+                    }
+                } else {
+                    if (block.getType() != Material.AIR) {
+                        block.setType(Material.AIR, false);
+                    }
                 }
             } else {
                 if (block.getType() != Material.AIR) {
@@ -73,13 +89,13 @@ public class ClearAreaTask extends BukkitRunnable {
 
             changed++;
             z++;
-            if (z > maxZ) {
-                z = minZ;
+            if (z > clearMaxZ) {
+                z = clearMinZ;
                 y--;
                 if (y < minY) {
                     y = maxY;
                     x++;
-                    if (x > maxX) {
+                    if (x > clearMaxX) {
                         cancel();
                         Bukkit.getLogger().info("Cleared area and generated bedrock floor!");
                         return;

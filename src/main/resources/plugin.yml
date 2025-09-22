@@ -1,16 +1,12 @@
 name: ChaosPillars
 main: com.boes.chaospillars.ChaosPillars
-version: 1.7.6
+version: 1.7.7
 api-version: 1.20
 commands:
   chaos:
     description: Root command for Chaos Pillars
     usage: /<command> <start|stop|reload|stats>
     permission: chaospillars.use
-  ChaosDebug:
-    description: Spawns a fake player for testing
-    usage: /ChaosDebug
-    permission: op
 permissions:
   chaospillars.use:
     description: Use the base /chaos command
