@@ -1,64 +1,41 @@
-# ⚡ Chaos Pillars
+Cʜᴀᴏꜱ Pɪʟʟᴀʀꜱ
 
-**Chaos Pillars** is a chaotic Minecraft minigame inspired by *Cubecraft Pillars of Fortune* — rebuilt for **Paper 1.21.7**, with full configuration support and extra madness.
+Dᴏ ʏᴏᴜ ᴡᴀɴᴛ ᴛᴏ ᴘʟᴀʏ ᴀ ꜰᴜɴ ᴍɪɴɪɢᴀᴍᴇ ᴡɪᴛʜ ʏᴏᴜʀ ꜰʀɪᴇɴᴅꜱ? Tʜᴇɴ ᴛʜɪꜱ ɪꜱ ᴛʜᴇ ɢᴀᴍᴇ ꜰᴏʀ ʏᴏᴜ! Cʜᴀᴏꜱᴘɪʟʟᴀʀꜱ ɪꜱ ᴀ ᴍɪɴɪɢᴀᴍᴇ ʙᴀꜱᴇᴅ ᴏɴ ᴛʜᴇ Cᴜʙᴇᴄʀᴀꜰᴛ ɢᴀᴍᴇ Pɪʟʟᴀʀꜱ ᴏꜰ Fᴏʀᴛᴜɴᴇ ʙᴜᴛ ᴛʜɪꜱ ᴠᴇʀꜱɪᴏɴ ɪꜱ ᴍᴏʀᴇ ᴄʜᴀᴏᴛɪᴄ ᴀɴᴅ ꜰᴜɴ!
 
----
+✨ Fᴇᴀᴛᴜʀᴇꜱ
+- 🎯 ᴜᴘ ᴛᴏ 10 ᴘʟᴀʏᴇʀ ꜱᴜᴘᴘᴏʀᴛ
+- 🏗️ Cᴜꜱᴛᴏᴍ ᴘɪʟʟᴀʀ ᴀɴᴅ ꜰʟᴏᴏʀ ʙʟᴏᴄᴋ ᴛʏᴘᴇꜱ
+- ⚙️ Aʟʟ ᴛɪᴍɪɴɢꜱ ᴀʀᴇ ꜰᴜʟʟʏ ᴄᴏɴꜰɪɢᴜʀᴀʙʟᴇ!
+- 🧹 Aᴜᴛᴏᴍᴀᴛɪᴄᴀʟʟʏ ʀᴇꜱᴇᴛꜱ ᴀꜰᴛᴇʀ ᴇᴠᴇʀʏ ɢᴀᴍᴇ.
+- 🎲 Rᴀɴᴅᴏᴍ ᴘᴏᴡᴇʀᴜᴘꜱ ᴀɴᴅ ᴇᴠᴇɴᴛꜱ!
+- 📊 Sᴛᴀᴛꜱ ᴀɴᴅ Sᴄᴏʀᴇʙᴏᴀʀᴅ ꜱʏꜱᴛᴇᴍ
 
-## ✨ Features
-- 🎯 Spawns **10 players** in a circle of chaos
-- 🏗️ Custom **pillar** and **floor** block types
-- ⚙️ Fully **configurable** via `config.yml`
-- 🧹 Auto **cleanup/reset** after each game
-- 🎲 Random **chaos events** (lava, mobs, swaps, etc.)
-- 📊 Built-in **stats & scoreboard system**
+⌨️ Cᴏᴍᴍᴀɴᴅꜱ
+| `/ᴄʜᴀᴏꜱ ꜱᴛᴀʀᴛ` | Sᴛᴀʀᴛꜱ ᴛʜᴇ Cʜᴀᴏꜱ Pɪʟʟᴀʀꜱ ɢᴀᴍᴇ | OP |
+| `/ᴄʜᴀᴏꜱ ꜱᴛᴏᴘ` | Sᴛᴏᴘꜱ/ʀᴇꜱᴇᴛ ᴛʜᴇ ᴄᴜʀʀᴇɴᴛ ɢᴀᴍᴇ | OP |
+| `/ᴄʜᴀᴏꜱ ʀᴇʟᴏᴀᴅ` | Rᴇʟᴏᴀᴅꜱ ᴛʜᴇ ᴄᴏɴꜰɪɢ | OP |
+| `/ᴄʜᴀᴏꜱ ꜱᴛᴀᴛꜱ` | Sʜᴏᴡꜱ ʏᴏᴜʀ ꜱᴛᴀᴛꜱ | Eᴠᴇʀʏᴏɴᴇ |
 
----
 
-## ⌨️ Commands
-| Command | Description | Permission |
-|---------|-------------|------------|
-| `/chaos start` | Starts the Chaos Pillars game | OP |
-| `/chaos stop` | Stops/reset the current game | OP |
-| `/chaos reload` | Reloads the config | OP |
-| `/chaos stats` | Shows your stats | Everyone |
+📥 Iɴꜱᴛᴀʟʟᴀᴛɪᴏɴ
+1. Dᴏᴡɴʟᴏᴀᴅ ᴛʜᴇ ʟᴀᴛᴇꜱᴛ ʀᴇʟᴇᴀꜱᴇ
+2. Pʟᴀᴄᴇ ɪᴛ ɪɴ ʏᴏᴜʀ ᴘᴀᴘᴇʀ ᴏʀ ꜱᴘɪɢᴏᴛ ꜱᴇʀᴠᴇʀ’ꜱ ᴘʟᴜɢɪɴꜱ ꜰᴏʟᴅᴇʀ
+3. Nᴏᴡ ʏᴏᴜ ᴄᴀɴ ᴘʟᴀʏ!
 
----
 
-## 📥 Installation
-1. Download the plugin jar
-2. Place it in your server’s `plugins/` folder
-3. Run a **Paper 1.21.7** server
-4. (Optional) Use a **void world** named `world` for best experience
+⚙️ Cᴏɴꜰɪɢᴜʀᴀᴛɪᴏɴ
+- Cᴏɴꜰɪɢ ɪꜱ ɢᴇɴᴇʀᴀᴛᴇᴅ ɪɴ ᴛʜᴇ ᴘʟᴜɢɪɴ’ꜱ ꜰᴏʟᴅᴇʀ
+- Rᴇʟᴏᴀᴅ ᴄʜᴀɴɢᴇꜱ ɪɴꜱᴛᴀɴᴛʟʏ ᴡɪᴛʜ `/ᴄʜᴀᴏꜱ ʀᴇʟᴏᴀᴅ`
 
----
+Yᴏᴜ ᴄᴀɴ ᴄᴜꜱᴛᴏᴍɪᴢᴇ:
+- ✅ Pɪʟʟᴀʀ ʙʟᴏᴄᴋ ᴛʏᴘᴇꜱ
+- ✅ Fʟᴏᴏʀ ʙʟᴏᴄᴋ ᴛʏᴘᴇꜱ
+- ✅ Eᴠᴇɴᴛ ᴛɪᴍɪɴɢ ᴀɴᴅ ʀᴀɴᴅᴏᴍɴᴇꜱꜱ
 
-## ⚙️ Configuration
-- Config is generated in the plugin’s folder
-- Reload changes instantly with `/chaos reload`
+📜 Lɪᴄᴇɴꜱᴇ
+Lɪᴄᴇɴꜱᴇᴅ ᴜɴᴅᴇʀ ᴛʜᴇ **MIT Lɪᴄᴇɴꜱᴇ**.
+Sᴇᴇ ᴛʜᴇ [LɪCENSE] ꜰɪʟᴇ ꜰᴏʀ ᴅᴇᴛᴀɪʟꜱ.
 
-You can customize:
-- ✅ Pillar block types
-- ✅ Floor block types
-- ✅ Event timing and randomness
-- ✅ Scoreboard settings
+📬 Cᴏɴᴛᴀᴄᴛ
+💬 Dɪꜱᴄᴏʀᴅ: BᴏᴇꜱBᴏᴇꜱ102
 
----
-
-## 🛠️ Development
-- Currently supports **10 players**
-- Expanding for **more player support** in upcoming versions
-
----
-
-## 📜 License
-Licensed under the **MIT License**.
-See the [LICENSE](./LICENSE) file for details.
-
----
-
-## 📬 Contact
-💬 Discord: **BoesBoes102**
-
----
-
-🔥 Get ready to climb, fight, and survive the **Pillars of Chaos**!
