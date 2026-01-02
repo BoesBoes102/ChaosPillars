@@ -16,7 +16,7 @@ public record FrozenListener(ChaosPillars plugin) implements Listener {
         Player player = event.getPlayer();
 
         if (!player.getWorld().equals(plugin.getGameWorld())) return;
-        if (plugin.getGameState() != GameState.RUNNING) return;
+        if (plugin.getGameState() == GameState.IDLE) return;
 
         if (plugin.getFrozenPlayers().contains(player.getUniqueId())) {
             event.setCancelled(true);
@@ -29,7 +29,7 @@ public record FrozenListener(ChaosPillars plugin) implements Listener {
         Player player = event.getPlayer();
 
         if (!player.getWorld().equals(plugin.getGameWorld())) return;
-        if (plugin.getGameState() != GameState.RUNNING) return;
+        if (plugin.getGameState() == GameState.IDLE) return;
 
         if (plugin.getFrozenPlayers().contains(player.getUniqueId())) {
             if (!event.getFrom().toVector().equals(event.getTo().toVector())) {
