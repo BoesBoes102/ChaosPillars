@@ -21,8 +21,7 @@ public record GameScoreboard(ChaosPillars plugin) {
             objective.setDisplaySlot(DisplaySlot.SIDEBAR);
 
             String[] lines = {
-                    "&6Chaos Pillars",
-                    "&7───────────────",
+                    "&7─────────────── ",
                     "&cTime: &f" + timeRemaining + "s",
                     "&aAlive: &f" + activePlayers.size(),
                     "&bPowerup: &f" + powerupCooldown + "s",
