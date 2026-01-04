@@ -24,7 +24,7 @@ public class LavaRiseTask {
 
     public void start() {
         int lavaStartY = -64;
-        int lavaEndY = -12;
+        int lavaEndY = -0;
         int lavaDurationSeconds = 80;
         long totalTicks = lavaDurationSeconds * 20L;
 
