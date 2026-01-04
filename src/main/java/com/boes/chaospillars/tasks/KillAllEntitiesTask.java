@@ -5,6 +5,7 @@ import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.WorldBorder;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 
 public class KillAllEntitiesTask {
@@ -24,14 +25,18 @@ public class KillAllEntitiesTask {
         double borderSize = border.getSize();
         Location center = border.getCenter();
 
-        for (Entity e : gameWorld.getEntities()) {
+        for (Entity e : new java.util.ArrayList<>(gameWorld.getEntities())) {
             if (e instanceof Player) continue;
 
-            Location entityLoc = e.getLocation();
-            double distanceFromCenter = entityLoc.distance(center);
-
-            if (distanceFromCenter <= borderSize / 2) {
+            if (e instanceof Item) {
                 e.remove();
+            } else {
+                Location entityLoc = e.getLocation();
+                double distanceFromCenter = entityLoc.distance(center);
+
+                if (distanceFromCenter <= borderSize / 2) {
+                    e.remove();
+                }
             }
         }
     }
