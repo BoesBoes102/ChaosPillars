@@ -2,7 +2,10 @@ package com.boes.chaospillars.tasks;
 
 import com.boes.chaospillars.ChaosPillars;
 import org.bukkit.*;
+import org.bukkit.attribute.Attribute;
+import org.bukkit.entity.FallingBlock;
 import org.bukkit.entity.Player;
+import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
@@ -10,12 +13,12 @@ import org.bukkit.util.Vector;
 
 import java.util.*;
 
-public class ChaosEventTask {
+public class EventTask {
 
     private final ChaosPillars plugin;
     private final Random random = new Random();
 
-    public ChaosEventTask(ChaosPillars plugin, World gameWorld) {
+    public EventTask(ChaosPillars plugin, World gameWorld) {
         if (plugin == null || plugin.getGameWorld() == null) {
             throw new IllegalArgumentException("Plugin and gameWorld cannot be null");
         }
@@ -38,36 +41,59 @@ public class ChaosEventTask {
     }
 
     public void triggerRandomEvent() {
-        int index = random.nextInt(10);
+        int index = random.nextInt(9);
         String eventName;
 
         switch (index) {
-            case 0 -> { changeWeather(); eventName = "Weather Change"; }
-            case 1 -> { randomTimeChange(); eventName = "Time Shift"; }
+            case 0 -> { sizeChange(); eventName = "Size Change"; }
+            case 1 -> { randomItemDeleter(); eventName = "Item Purge"; }
             case 2 -> { swapPositions(); eventName = "Swap Positions"; }
             case 3 -> { swapInventories(); eventName = "Swap Inventories"; }
-            case 4 -> { applyGlow(); eventName = "No Hiding"; }
-            case 5 -> { dropAnvilsAbovePlayers(); eventName = "Anvil Drop"; }
-            case 6 -> { randomNegativeEffect(); eventName = "Negative Potion Effect"; }
-            case 7 -> { giveThrowable(); eventName = "Throwable Items"; }
-            case 8 -> { swapHealthFoodSaturation(); eventName = "Swap Health"; }
-            case 9 -> { makeEveryoneJump(); eventName = "Simon Says Jump"; }
+            case 4 -> { tntDrop(); eventName = "TNT Drop"; }
+            case 5 -> { randomNegativeEffect(); eventName = "Bad Potion Effect"; }
+            case 6 -> { giveThrowable(); eventName = "Snowball Fight"; }
+            case 7 -> { swapHealthFoodSaturation(); eventName = "Swap Health"; }
+            case 8 -> { thunderStrike(); eventName = "Thunder Jump"; }
             default -> eventName = "Unknown Event";
         }
 
         Bukkit.broadcastMessage(ChatColor.LIGHT_PURPLE + "[Chaos] " + ChatColor.YELLOW + eventName + ChatColor.LIGHT_PURPLE + " event has occurred!");
     }
 
-    public void changeWeather() {
+    public void sizeChange() {
         World world = getGameWorld();
         if (world == null) return;
-        world.setStorm(!world.hasStorm());
+
+        for (Player player : getActivePlayers()) {
+            double scale = 0.5 + random.nextDouble();
+            var attribute = player.getAttribute(Attribute.SCALE);
+            if (attribute != null) {
+                attribute.setBaseValue(scale);
+            }
+        }
+
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            for (Player player : Bukkit.getOnlinePlayers()) {
+                var attribute = player.getAttribute(Attribute.SCALE);
+                if (attribute != null) {
+                    attribute.setBaseValue(1.0);
+                }
+            }
+        }, 20 * 10);
     }
 
-    public void randomTimeChange() {
-        World world = getGameWorld();
-        if (world == null) return;
-        world.setTime(random.nextInt(24000));
+    public void randomItemDeleter() {
+        for (Player player : getActivePlayers()) {
+            ItemStack[] contents = player.getInventory().getContents();
+            List<Integer> nonEmptyIndexes = new ArrayList<>();
+            for (int i = 0; i < contents.length; i++) if (contents[i] != null) nonEmptyIndexes.add(i);
+
+            int itemsToRemove = Math.max(1, nonEmptyIndexes.size() / 7);
+            Collections.shuffle(nonEmptyIndexes);
+            for (int i = 0; i < itemsToRemove; i++) contents[nonEmptyIndexes.get(i)] = null;
+
+            player.getInventory().setContents(contents);
+        }
     }
 
     public void swapPositions() {
@@ -112,16 +138,18 @@ public class ChaosEventTask {
         }
     }
 
-    public void applyGlow() {
+    public void tntDrop() {
         for (Player player : getActivePlayers()) {
-            player.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, 20 * 20, 0, false, false, true));
-        }
-    }
-
-    public void dropAnvilsAbovePlayers() {
-        for (Player player : getActivePlayers()) {
-            Location loc = player.getLocation().add(0, 30, 0);
-            player.getWorld().spawnFallingBlock(loc, Material.ANVIL.createBlockData());
+            Location loc = player.getLocation().add(0, 10, 0);
+            org.bukkit.entity.TNTPrimed tnt = player.getWorld().spawn(loc, org.bukkit.entity.TNTPrimed.class);
+            tnt.setFuseTicks(50);
+            tnt.setMetadata("chaos_tnt", new FixedMetadataValue(plugin, true));
+            
+            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                if (player.isOnline()) {
+                    player.setVelocity(new Vector(0, 1.3, 0));
+                }
+            }, 40);
         }
     }
 
@@ -182,9 +210,13 @@ public class ChaosEventTask {
         }
     }
 
-    public void makeEveryoneJump() {
+    public void thunderStrike() {
         for (Player player : getActivePlayers()) {
-            player.setVelocity(player.getVelocity().add(new Vector(0, 1.2, 0)));
+            Location loc = player.getLocation();
+            player.getWorld().strikeLightningEffect(loc);
+            player.setVelocity(player.getVelocity().add(new Vector(0, 2, 0)));
+            plugin.getThunderstruckPlayers().add(player.getUniqueId());
+            loc.getBlock().setType(Material.FIRE);
         }
     }
 

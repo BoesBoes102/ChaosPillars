@@ -1,7 +1,10 @@
 package com.boes.chaospillars.tasks;
 
 import com.boes.chaospillars.ChaosPillars;
+import org.bukkit.Bukkit;
 import org.bukkit.World;
+import org.bukkit.attribute.Attribute;
+import org.bukkit.entity.Player;
 
 public class ResetGameTask {
 
@@ -52,5 +55,14 @@ public class ResetGameTask {
         gameWorld.setTime(1000);
         gameWorld.setStorm(false);
         gameWorld.setThundering(false);
+
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            var attribute = player.getAttribute(Attribute.SCALE);
+            if (attribute != null) {
+                attribute.setBaseValue(1.0);
+            }
+            player.setWalkSpeed(0.2f);
+            player.setFlySpeed(0.1f);
+        }
     }
 }
