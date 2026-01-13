@@ -22,6 +22,8 @@ public class ChaosCommandTab implements TabCompleter {
             if (sender.hasPermission("chaospillars.stop")) suggestions.add("stop");
             if (sender.hasPermission("chaospillars.reload")) suggestions.add("reload");
             suggestions.add("stats");
+            if (sender.hasPermission("chaospillars.admin")) suggestions.add("secondring");
+            suggestions.add("configlist");
             return suggestions;
         }
 
@@ -34,6 +36,10 @@ public class ChaosCommandTab implements TabCompleter {
                 }
             }
             return playerNames;
+        }
+
+        if (args.length == 2 && args[0].equalsIgnoreCase("secondring")) {
+            return List.of("on", "off");
         }
 
         return Collections.emptyList();

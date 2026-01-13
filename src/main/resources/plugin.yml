@@ -1,11 +1,11 @@
 name: ChaosPillars
 main: com.boes.chaospillars.ChaosPillars
-version: 1.7.7
-api-version: 1.20
+version: 1.8.0
+api-version: 1.21
 commands:
   chaos:
     description: Root command for Chaos Pillars
-    usage: /<command> <start|stop|reload|stats>
+    usage: /<command> <start|stop|reload|stats|secondring|configlist>
     permission: chaospillars.use
 permissions:
   chaospillars.use:
@@ -24,6 +24,7 @@ permissions:
     description: Reload Chaos Pillars config
     default: op
 
-worlds:
-  Chaospillars:
-    generator: com.boes.chaospillars.tasks.SetupTask$VoidGenerator
+  chaospillars.admin:
+    description: Admin commands for Chaos Pillars
+    default: op
+

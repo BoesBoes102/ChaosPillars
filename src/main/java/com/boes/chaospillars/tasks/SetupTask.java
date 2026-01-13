@@ -51,6 +51,7 @@ public record SetupTask(JavaPlugin plugin) {
         gameWorld.getWorldBorder().setSize(37);
         gameWorld.getWorldBorder().setWarningDistance(0);
         gameWorld.getWorldBorder().setWarningTime(0);
+        gameWorld.getWorldBorder().setDamageAmount(2);
 
         disableWorld("world_nether");
         disableWorld("world_the_end");

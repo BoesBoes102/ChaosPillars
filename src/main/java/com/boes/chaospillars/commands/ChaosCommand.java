@@ -12,12 +12,16 @@ public class ChaosCommand implements CommandExecutor {
     private final StopCommand stop;
     private final ReloadCommand reload;
     private final StatsCommand stats;
+    private final SecondRingCommand SecondRingCommand;
+    private final ConfigListCommand configList;
 
     public ChaosCommand(ChaosPillars plugin) {
         this.start = new StartCommand(plugin);
         this.stop = new StopCommand(plugin);
         this.reload = new ReloadCommand(plugin);
         this.stats = new StatsCommand(plugin);
+        this.SecondRingCommand = new SecondRingCommand(plugin);
+        this.configList = new ConfigListCommand(plugin);
     }
 
     @Override
@@ -29,6 +33,8 @@ public class ChaosCommand implements CommandExecutor {
             case "stop" -> stop.onCommand(sender, command, label, args);
             case "reload" -> reload.onCommand(sender, command, label, args);
             case "stats" -> stats.onCommand(sender, command, label, args);
+            case "secondring" -> SecondRingCommand.onCommand(sender, command, label, args);
+            case "configlist" -> configList.onCommand(sender, command, label, args);
             default -> sender.sendMessage("Unknown subcommand.");
         }
         return true;

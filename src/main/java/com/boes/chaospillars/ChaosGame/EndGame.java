@@ -15,6 +15,12 @@ import org.bukkit.entity.Player;
 public record EndGame(ChaosPillars plugin) {
 
     public void endGame() {
+        var border = plugin.getGameWorld().getWorldBorder();
+        border.setWarningDistance(0);
+        border.setWarningTime(0);
+        border.setDamageAmount(2);
+        border.setSize(37, 0);
+
         ResetGameTask resetTask = new ResetGameTask(
                 plugin,
                 plugin.getGameWorld(),
@@ -40,6 +46,7 @@ public record EndGame(ChaosPillars plugin) {
         plugin.getActivePlayers().clear();
         plugin.getQuitters().clear();
         plugin.getLastDamager().clear();
+        plugin.getThunderstruckPlayers().clear();
 
         plugin.setGameState(GameState.IDLE);
 

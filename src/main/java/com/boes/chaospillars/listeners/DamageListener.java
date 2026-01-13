@@ -6,13 +6,41 @@ import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.util.Vector;
 
 public record DamageListener(ChaosPillars plugin) implements Listener {
 
     @EventHandler
+    public void onEntityDamage(EntityDamageEvent event) {
+        if (!(event.getEntity() instanceof Player player)) return;
+
+        if (event.getCause() == EntityDamageEvent.DamageCause.FALL) {
+            if (plugin.getThunderstruckPlayers().contains(player.getUniqueId())) {
+                event.setCancelled(true);
+                plugin.getThunderstruckPlayers().remove(player.getUniqueId());
+            }
+        }
+    }
+
+    @EventHandler
+    public void onEntityExplode(EntityExplodeEvent event) {
+        if (event.getEntity() != null && event.getEntity().hasMetadata("chaos_tnt")) {
+            event.blockList().clear();
+        }
+    }
+
+    @EventHandler
     public void onEntityDamageByEntity(EntityDamageByEntityEvent event) {
         if (!(event.getEntity() instanceof Player damaged)) return;
+
+        if (event.getDamager() instanceof TNTPrimed tnt) {
+            if (tnt.hasMetadata("chaos_tnt")) {
+                event.setCancelled(true);
+                return;
+            }
+        }
 
         if (!damaged.getWorld().equals(plugin.getGameWorld())) return;
         if (plugin.getGameState() != GameState.RUNNING) return;

@@ -49,6 +49,7 @@ public record DeathListener(ChaosPillars plugin) implements Listener {
         deadStats.resetWinStreak();
 
         plugin.getLastDamager().remove(deadId);
+        plugin.getThunderstruckPlayers().remove(deadId);
         plugin.getActivePlayers().remove(deadId);
 
         dead.teleport(plugin.getGameWorld().getSpawnLocation());
@@ -78,14 +79,9 @@ public record DeathListener(ChaosPillars plugin) implements Listener {
             PlayerStats winnerStats = plugin.getPlayerStats().computeIfAbsent(winnerId, k -> new PlayerStats());
             winnerStats.addWin();
             winnerStats.resetLossStreak();
-            int newStreak = winnerStats.getWinStreak() + 1;
-            winnerStats.setWinStreak(newStreak);
-
-            if (newStreak > winnerStats.getHighestWinStreak()) {
-                winnerStats.setHighestWinStreak(newStreak);
-                if (newStreak >= 3) {
-                    Bukkit.broadcastMessage(ChatColor.YELLOW + winner.getName() + " is on a " + newStreak + " game win streak!");
-                }
+            int newStreak = winnerStats.getWinStreak();
+            if (newStreak >= 3) {
+                Bukkit.broadcastMessage(ChatColor.YELLOW + winner.getName() + " is on a " + newStreak + " game win streak!");
             }
 
             winner.teleport(plugin.getGameWorld().getSpawnLocation());

@@ -52,7 +52,11 @@ public record StartGame(ChaosPillars plugin, World gameWorld, ChaosScoreboardMan
             plugin.getFrozenPlayers().add(player.getUniqueId());
         }
 
-        gameWorld.getWorldBorder().setSize(37);
+        int playerCount = players.size();
+        boolean useExtraRing = playerCount > 10 || plugin.isForceExtraRing();
+        
+        double worldBorderSize = useExtraRing ? 61 : 37;
+        gameWorld.getWorldBorder().setSize(worldBorderSize);
         plugin.setGameState(GameState.COUNTDOWN);
 
         new BukkitRunnable() {
@@ -83,7 +87,9 @@ public record StartGame(ChaosPillars plugin, World gameWorld, ChaosScoreboardMan
                     scoreboardManager.startScoreboard();
 
                     for (UUID uuid : plugin.getActivePlayers()) {
-                        plugin.getPlayerStats().computeIfAbsent(uuid, k -> new PlayerStats()).addGamePlayed();
+                        PlayerStats stats = plugin.getPlayerStats().computeIfAbsent(uuid, k -> new PlayerStats());
+                        stats.addGamePlayed();
+                        stats.resetRoundKills();
                     }
 
                     cancel();

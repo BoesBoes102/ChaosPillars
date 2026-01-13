@@ -4,6 +4,7 @@ public class PlayerStats {
     private int wins;
     private int gamesPlayed;
     private int kills;
+    private int roundKills;
     private int deaths;
     private int winStreak = 0;
     private int highestWinStreak = 0;
@@ -52,6 +53,19 @@ public class PlayerStats {
 
     public void addKill() {
         kills++;
+        roundKills++;
+    }
+
+    public int getRoundKills() {
+        return roundKills;
+    }
+
+    public void setRoundKills(int roundKills) {
+        this.roundKills = Math.max(0, roundKills);
+    }
+
+    public void resetRoundKills() {
+        this.roundKills = 0;
     }
 
     public int getDeaths() {

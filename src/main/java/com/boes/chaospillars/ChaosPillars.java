@@ -31,8 +31,10 @@ public class ChaosPillars extends JavaPlugin implements Listener {
     public Map<UUID, PlayerStats> playerStats = new HashMap<>();
     public Set<UUID> activePlayers = new HashSet<>();
     public Set<UUID> frozenPlayers = new HashSet<>();
+    public Set<UUID> thunderstruckPlayers = new HashSet<>();
     public Set<UUID> quitters = new HashSet<>();
     public Map<UUID, UUID> lastDamager = new HashMap<>();
+    private boolean forceExtraRing = false;
     private GameState gameState = GameState.IDLE;
     private GameScoreboard gameScoreboard;
     private IdleScoreboard idleScoreboard;
@@ -135,6 +137,10 @@ public class ChaosPillars extends JavaPlugin implements Listener {
         return frozenPlayers;
     }
 
+    public Set<UUID> getThunderstruckPlayers() {
+        return thunderstruckPlayers;
+    }
+
     public Set<UUID> getQuitters() {
         return quitters;
     }
@@ -179,6 +185,14 @@ public class ChaosPillars extends JavaPlugin implements Listener {
 
     public IdleScoreboard getIdleScoreboard() {
         return idleScoreboard;
+    }
+
+    public boolean isForceExtraRing() {
+        return forceExtraRing;
+    }
+
+    public void setForceExtraRing(boolean forceExtraRing) {
+        this.forceExtraRing = forceExtraRing;
     }
 
     @Override

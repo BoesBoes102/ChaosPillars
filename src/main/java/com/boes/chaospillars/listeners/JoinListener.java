@@ -22,6 +22,8 @@ public record JoinListener(ChaosPillars plugin) implements Listener {
             player.sendMessage(ChatColor.LIGHT_PURPLE + "Do /chaos start to start a game!");
 
             if (plugin.getGameState() == GameState.RUNNING) {
+                plugin.getActivePlayers().remove(player.getUniqueId());
+
                 plugin.getGameScoreboard().updateGameScoreboard(
                         plugin.getTimer(),
                         plugin.getPowerupCooldown(),

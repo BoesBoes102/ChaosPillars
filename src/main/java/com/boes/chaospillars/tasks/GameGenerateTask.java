@@ -16,9 +16,11 @@ public class GameGenerateTask {
     private final World gameWorld;
     private final List<Material> floorBlockTypes;
     private final List<Material> pillarBlockTypes;
+    private final ChaosPillars plugin;
     private final Random random = new Random();
 
     public GameGenerateTask(ChaosPillars plugin) {
+        this.plugin = plugin;
         this.gameWorld = plugin.getGameWorld();
         this.floorBlockTypes = plugin.floorBlockTypes;
         this.pillarBlockTypes = plugin.pillarBlockTypes;
@@ -29,7 +31,73 @@ public class GameGenerateTask {
             return new ArrayList<>();
         }
         generateFloor(baseY);
-        return generatePillars(pillarRadius, pillarHeight, baseY, pillarCount);
+        
+        int playerCount = Bukkit.getOnlinePlayers().size();
+        boolean useExtraRing = playerCount > 10 || plugin.isForceExtraRing();
+        
+        if (useExtraRing) {
+            return generateTwoRings(pillarRadius, pillarHeight, baseY, pillarCount);
+        } else {
+            return generatePillars(pillarRadius, pillarHeight, baseY, pillarCount);
+        }
+    }
+    
+    private List<Location> generateTwoRings(int innerRadius, int innerHeight, int baseY, int innerCount) {
+        List<Location> allLocations = new ArrayList<>();
+        
+        Material currentRoundPillarMaterial;
+        if (pillarBlockTypes.isEmpty()) {
+            Bukkit.getLogger().warning("No valid pillar block types available. Defaulting to stone.");
+            currentRoundPillarMaterial = Material.STONE;
+        } else {
+            currentRoundPillarMaterial = pillarBlockTypes.get(random.nextInt(pillarBlockTypes.size()));
+        }
+        
+        Bukkit.broadcastMessage(ChatColor.LIGHT_PURPLE + "This round's pillars are made of " +
+                ChatColor.YELLOW + currentRoundPillarMaterial.name().toLowerCase().replace('_', ' ') + "!");
+        
+        int outerRadius = innerRadius + 6;
+        int outerCount = calcPillarSpacing(outerRadius, 6.0);
+        
+        for (int i = 0; i < innerCount; i++) {
+            double angle = 2 * Math.PI * i / innerCount;
+            int x = (int) (innerRadius * Math.cos(angle));
+            int z = (int) (innerRadius * Math.sin(angle));
+            
+            for (int y = 0; y < innerHeight; y++) {
+                Location loc = new Location(gameWorld, x, baseY + y, z);
+                loc.getBlock().setType(currentRoundPillarMaterial, false);
+            }
+            
+            allLocations.add(new Location(gameWorld, x, baseY, z));
+        }
+        
+        for (int i = 0; i < outerCount; i++) {
+            double angle = 2 * Math.PI * i / outerCount;
+            int x = (int) (outerRadius * Math.cos(angle));
+            int z = (int) (outerRadius * Math.sin(angle));
+            
+            for (int y = 0; y < innerHeight; y++) {
+                Location loc = new Location(gameWorld, x, baseY + y, z);
+                loc.getBlock().setType(currentRoundPillarMaterial, false);
+            }
+            
+            allLocations.add(new Location(gameWorld, x, baseY, z));
+        }
+        
+        return allLocations;
+    }
+    
+    private int calcPillarSpacing(int radius, double desiredSpacing) {
+        if (desiredSpacing <= 0 || desiredSpacing >= 2 * radius) {
+            return 10;
+        }
+        double sinValue = desiredSpacing / (2.0 * radius);
+        if (sinValue > 1.0) {
+            return 10;
+        }
+        int count = (int) Math.round(Math.PI / Math.asin(sinValue));
+        return Math.max(count, 4);
     }
 
     private void generateFloor(int baseY) {
@@ -50,7 +118,10 @@ public class GameGenerateTask {
             }
         }
 
-        int floorRadius = 18;
+        int playerCount = Bukkit.getOnlinePlayers().size();
+        boolean useExtraRing = playerCount > 10 || plugin.isForceExtraRing();
+        int floorRadius = useExtraRing ? 28 : 18;
+        
         Material currentRoundFloorMaterial = floorBlockTypes.get(random.nextInt(floorBlockTypes.size()));
 
         for (int x = -floorRadius; x <= floorRadius; x++) {
