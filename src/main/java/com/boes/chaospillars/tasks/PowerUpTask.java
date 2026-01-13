@@ -13,11 +13,11 @@ import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 
-public class RandomPositiveEffectTask extends BukkitRunnable {
+public class PowerUpTask extends BukkitRunnable {
     private final ChaosPillars plugin;
     private final Random random = new Random();
 
-    public RandomPositiveEffectTask(ChaosPillars plugin) {
+    public PowerUpTask(ChaosPillars plugin) {
         this.plugin = plugin;
     }
 

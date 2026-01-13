@@ -39,6 +39,9 @@ public class ChaosScoreboardManager {
     }
 
     public void resetScoreboard() {
+        if (!plugin.isEnabled()) {
+            return;
+        }
         Bukkit.getScheduler().runTask(plugin, () -> {
             for (Player player : Bukkit.getOnlinePlayers()) {
                 Scoreboard board = player.getScoreboard();

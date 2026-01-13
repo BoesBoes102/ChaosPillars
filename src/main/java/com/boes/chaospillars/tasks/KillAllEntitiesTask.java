@@ -27,17 +27,7 @@ public class KillAllEntitiesTask {
 
         for (Entity e : new java.util.ArrayList<>(gameWorld.getEntities())) {
             if (e instanceof Player) continue;
-
-            if (e instanceof Item) {
-                e.remove();
-            } else {
-                Location entityLoc = e.getLocation();
-                double distanceFromCenter = entityLoc.distance(center);
-
-                if (distanceFromCenter <= borderSize / 2) {
-                    e.remove();
-                }
-            }
+            e.remove();
         }
     }
 }

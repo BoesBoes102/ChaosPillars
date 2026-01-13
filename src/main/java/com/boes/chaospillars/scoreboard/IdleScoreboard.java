@@ -20,15 +20,14 @@ public record IdleScoreboard(Map<UUID, PlayerStats> playerStats) {
         PlayerStats stats = playerStats.getOrDefault(player.getUniqueId(), new PlayerStats());
 
         String[] lines = {
-                "&6Chaos Pillars",
-                "&7───────────────",
-                "&ePlayer: &f" + player.getName(),
-                "&7Kills: &f" + stats.getKills(),
-                "&7Deaths: &f" + stats.getDeaths(),
-                "&7Wins: &f" + stats.getWins(),
-                "&7Games Played: &f" + stats.getGamesPlayed(),
-                "&7Win Streak: &f" + stats.getWinStreak(),
-                "&7Loss Streak: &f" + stats.getLossStreak(),
+                "&7─────────────── ",
+                "&fPlayer: &e" + player.getName(),
+                "&fKills: &f" + stats.getKills(),
+                "&fDeaths: &f" + stats.getDeaths(),
+                "&fWins: &f" + stats.getWins(),
+                "&fGames Played: &f" + stats.getGamesPlayed(),
+                "&fWin Streak: &6" + stats.getWinStreak(),
+                "&fLoss Streak: &f" + stats.getLossStreak(),
                 "&7───────────────"
         };
 

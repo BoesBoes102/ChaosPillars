@@ -33,7 +33,7 @@ public class ConfigValidator {
     
     private void validateGameSettings() {
         int timerSeconds = plugin.getConfig().getInt("game.timer-seconds", -1);
-        if (timerSeconds <= 180) {
+        if (timerSeconds < 180) {
             errors.add("game.timer-seconds must be atleast 180 seconds or more! (found: " + timerSeconds + ")");
         }
         
