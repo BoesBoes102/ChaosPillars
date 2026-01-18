@@ -25,7 +25,8 @@ public record StopCommand(ChaosPillars plugin) implements CommandExecutor {
             return true;
         }
 
-        if (plugin.getGameState() != GameState.RUNNING) {
+        GameState currentState = plugin.getGameState();
+        if (currentState != GameState.RUNNING && currentState != GameState.COUNTDOWN) {
             player.sendMessage(ChatColor.RED + "There is no game currently running.");
             return true;
         }

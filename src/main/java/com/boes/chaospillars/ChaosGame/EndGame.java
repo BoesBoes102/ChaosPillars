@@ -48,10 +48,12 @@ public record EndGame(ChaosPillars plugin) {
         plugin.getLastDamager().clear();
         plugin.getThunderstruckPlayers().clear();
 
-        plugin.setGameState(GameState.IDLE);
-
         ChaosScoreboardManager scoreboardManager = plugin.getScoreboardManager();
         scoreboardManager.resetScoreboard();
         scoreboardManager.startScoreboard();
+
+        Bukkit.getScheduler().scheduleSyncDelayedTask(this.plugin(), () -> {
+            plugin.setGameState(GameState.IDLE);
+        }, 60L);
     }
 }

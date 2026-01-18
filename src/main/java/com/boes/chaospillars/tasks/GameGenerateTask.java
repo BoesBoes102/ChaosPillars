@@ -57,7 +57,7 @@ public class GameGenerateTask {
                 ChatColor.YELLOW + currentRoundPillarMaterial.name().toLowerCase().replace('_', ' ') + "!");
         
         int outerRadius = innerRadius + 6;
-        int outerCount = calcPillarSpacing(outerRadius, 6.0);
+        int outerCount = 18;
         
         for (int i = 0; i < innerCount; i++) {
             double angle = 2 * Math.PI * i / innerCount;
