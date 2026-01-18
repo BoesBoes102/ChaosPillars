@@ -4,7 +4,7 @@ A fun and chaotic Minecraft minigame plugin based on the Cubecraft game "Pillars
 
 ## Features
 
-- 🎯 **Multiplayer Support** - Up to 29 players can compete simultaneously
+- 🎯 **Multiplayer Support** - Up to 28 players can compete simultaneously
 - 🏗️ **Dual rings** - Uses two rings when there are more than 10 players
 - ⚙️ **Fully Configurable** - All timings and settings can be adjusted
 - 🧹 **Auto Reset** - Automatically resets after every game
@@ -13,12 +13,14 @@ A fun and chaotic Minecraft minigame plugin based on the Cubecraft game "Pillars
 
 ## Commands
 
-| Command | Description | Permission |
-|---------|-------------|------------|
-| `/chaos start` | Starts a new Chaos Pillars game | OP |
-| `/chaos stop` | Stops and resets the current game | OP |
-| `/chaos reload` | Reloads the plugin configuration | OP |
-| `/chaos stats` | Shows your personal statistics | Everyone |
+| Command | Description                        | Permission |
+|---------|------------------------------------|------------|
+| `/chaos start` | Starts a new Chaos Pillars game    | OP |
+| `/chaos stop` | Stops and resets the current game  | OP |
+| `/chaos reload` | Reloads the plugin configuration   | OP |
+ `/chaos configlist` | Displays the current configuration | OP |
+ `/chaos secondring` | Toggles dualring mode on & off     | OP |
+| `/chaos stats` | Shows your personal statistics     | Everyone |
 
 ## Installation
 
