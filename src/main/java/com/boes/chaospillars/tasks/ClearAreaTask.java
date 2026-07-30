@@ -34,7 +34,7 @@ public class ClearAreaTask extends BukkitRunnable {
             throw new IllegalStateException("Game world is not loaded yet!");
         }
 
-        double borderSize = 61; // Always clear size of a duel rings game
+        double borderSize = 61;
         int centerX = gameWorld.getWorldBorder().getCenter().getBlockX();
         int centerZ = gameWorld.getWorldBorder().getCenter().getBlockZ();
 
